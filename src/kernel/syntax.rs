@@ -24,11 +24,18 @@ pub enum Exp {
     // Con(Ident),
     // Rec(Ident),
     Bottom,
-    Absurd,
+    Absurd(Box<AbsurdExp>),
     Pi(Box<PiExp>),
     Fun(Box<FunExp>),
     App(Box<AppExp>),
     Var(Ident),
+}
+
+#[derive(Clone)]
+pub struct AbsurdExp {
+    pub scr: Exp,
+    pub motive: FunExp,
+    pub branch: Exp,
 }
 
 #[derive(Clone)]
