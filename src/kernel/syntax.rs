@@ -1,9 +1,12 @@
 pub type Ident = String;
 
-#[derive(Clone)]
-pub struct TypedName {
+/** We should use big integer here to avoid inconsistency bug */
+pub type Level = u128;
+
+#[derive(Clone, Debug)]
+pub struct TypedName<T> {
     pub name: Ident,
-    pub typ: Exp,
+    pub typ: T,
 }
 
 // pub struct TermDef {
@@ -16,42 +19,60 @@ pub struct TypedName {
 //     pub cons: Vec<TypedName>,
 // }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Exp {
-    /** We should use big integer here to avoid inconsistency bug */
-    Univ(u128),
+    Univ(Level),
     // Data(Ident),
     // Con(Ident),
     // Rec(Ident),
     Bottom,
-    Absurd(Box<AbsurdExp>),
-    Pi(Box<PiExp>),
-    Fun(Box<FunExp>),
-    App(Box<AppExp>),
+    Absurd(Box<Absurd<Self,Self>>),
+    Pi(Box<Pi<Self>>),
+    Fun(Box<Fun<Self>>),
+    App(Box<App<Self,Self>>),
     Var(Ident),
 }
 
-#[derive(Clone)]
-pub struct AbsurdExp {
-    pub scr: Exp,
-    pub motive: FunExp,
-    pub branch: Exp,
+#[derive(Clone, Debug)]
+pub struct Absurd<N,R> {
+    pub scr: R,
+    pub motive_param: TypedName<N>,
+    pub motive_body: N,
 }
 
-#[derive(Clone)]
-pub struct PiExp {
-    pub param: TypedName,
-    pub ret_typ: Exp,
+#[derive(Clone, Debug)]
+pub struct Pi<N> {
+    pub param: TypedName<N>,
+    pub ret_typ: N,
 }
 
-#[derive(Clone)]
-pub struct FunExp {
-    pub param: TypedName,
-    pub body: Exp,
+#[derive(Clone, Debug)]
+pub struct Fun<N> {
+    pub param: TypedName<N>,
+    pub body: N,
 }
 
-#[derive(Clone)]
-pub struct AppExp {
-    pub fun: Exp,
-    pub arg: Exp,
+#[derive(Clone, Debug)]
+pub struct App<N,R> {
+    pub fun: R,
+    pub arg: N,
+}
+
+#[derive(Clone, Debug)]
+pub enum Norm {
+    Univ(Level),
+    // Data(Ident),
+    // Con(Ident),
+    Bottom,
+    Pi(Box<Pi<Self>>),
+    Fun(Box<Fun<Self>>),
+    Neut(Neut),
+}
+
+#[derive(Clone, Debug)]
+pub enum Neut {
+    // Rec(Ident),
+    Absurd(Box<Absurd<Norm,Self>>),
+    App(Box<App<Norm,Self>>),
+    Var(Ident),
 }
