@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub type Ident = String;
 
 /** We should use big integer here to avoid inconsistency bug */
@@ -26,15 +28,15 @@ pub enum Exp {
     // Con(Ident),
     // Rec(Ident),
     Bottom,
-    Absurd(Box<Absurd<Self,Self>>),
+    Absurd(Box<Absurd<Self, Self>>),
     Pi(Box<Pi<Self>>),
     Fun(Box<Fun<Self>>),
-    App(Box<App<Self,Self>>),
+    App(Box<App<Self, Self>>),
     Var(Ident),
 }
 
 #[derive(Clone, Debug)]
-pub struct Absurd<N,R> {
+pub struct Absurd<N, R> {
     pub scr: R,
     pub motive_param: TypedName<N>,
     pub motive_body: N,
@@ -53,10 +55,31 @@ pub struct Fun<N> {
 }
 
 #[derive(Clone, Debug)]
-pub struct App<N,R> {
+pub struct App<N, R> {
     pub fun: R,
     pub arg: N,
 }
+
+/// Helper functions for Exp construction
+impl Exp {
+    pub fn absurd(absurd_exp: Absurd<Self, Self>) -> Self {
+        Exp::Absurd(Box::new(absurd_exp))
+    }
+
+    pub fn pi(pi_exp: Pi<Self>) -> Self {
+        Exp::Pi(Box::new(pi_exp))
+    }
+
+    pub fn fun(fun_exp: Fun<Self>) -> Self {
+        Exp::Fun(Box::new(fun_exp))
+    }
+
+    pub fn app(app_exp: App<Self, Self>) -> Self {
+        Exp::App(Box::new(app_exp))
+    }
+}
+
+pub type Ctx = HashMap<Ident, Exp>;
 
 #[derive(Clone, Debug)]
 pub enum Norm {
@@ -72,7 +95,41 @@ pub enum Norm {
 #[derive(Clone, Debug)]
 pub enum Neut {
     // Rec(Ident),
-    Absurd(Box<Absurd<Norm,Self>>),
-    App(Box<App<Norm,Self>>),
+    Absurd(Box<Absurd<Norm, Self>>),
+    App(Box<App<Norm, Self>>),
     Var(Ident),
+}
+
+/// Helper functions for Norm construction
+impl Norm {
+    pub fn absurd(absurd_exp: Absurd<Self, Neut>) -> Self {
+        Norm::Neut(Neut::absurd(absurd_exp))
+    }
+
+    pub fn pi(pi_exp: Pi<Self>) -> Self {
+        Norm::Pi(Box::new(pi_exp))
+    }
+
+    pub fn fun(fun_exp: Fun<Self>) -> Self {
+        Norm::Fun(Box::new(fun_exp))
+    }
+
+    pub fn app(app_exp: App<Self, Neut>) -> Self {
+        Norm::Neut(Neut::app(app_exp))
+    }
+
+    pub fn var(id: Ident) -> Self {
+        Norm::Neut(Neut::Var(id))
+    }
+}
+
+/// Helper functions for Neut construction
+impl Neut {
+    pub fn absurd(absurd_exp: Absurd<Norm, Self>) -> Self {
+        Neut::Absurd(Box::new(absurd_exp))
+    }
+
+    pub fn app(app_exp: App<Norm, Self>) -> Self {
+        Neut::App(Box::new(app_exp))
+    }
 }
