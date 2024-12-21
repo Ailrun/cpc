@@ -2,10 +2,11 @@ use std::collections::HashMap;
 
 pub type Ident = String;
 
-/** We should use big integer here to avoid inconsistency bug */
+/// `Level` starts from 0.
+/// TODO: We should use big integer here to avoid inconsistency bug.
 pub type Level = u128;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TypedName<T> {
     pub name: Ident,
     pub typ: T,
@@ -21,7 +22,7 @@ pub struct TypedName<T> {
 //     pub cons: Vec<TypedName>,
 // }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Exp {
     Univ(Level),
     // Data(Ident),
@@ -35,32 +36,34 @@ pub enum Exp {
     Var(Ident),
 }
 
-#[derive(Clone, Debug)]
+pub type Typ = Exp;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Absurd<N, R> {
     pub scr: R,
-    pub motive_param: TypedName<N>,
+    pub motive_param: Ident,
     pub motive_body: N,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Pi<N> {
     pub param: TypedName<N>,
     pub ret_typ: N,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Fun<N> {
     pub param: TypedName<N>,
     pub body: N,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct App<N, R> {
     pub fun: R,
     pub arg: N,
 }
 
-/// Helper functions for Exp construction
+/// Helper functions for easier `Exp` construction
 impl Exp {
     pub fn absurd(absurd_exp: Absurd<Self, Self>) -> Self {
         Exp::Absurd(Box::new(absurd_exp))
@@ -79,9 +82,9 @@ impl Exp {
     }
 }
 
-pub type Ctx = HashMap<Ident, Exp>;
+pub type Ctx = HashMap<Ident, Norm>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Norm {
     Univ(Level),
     // Data(Ident),
@@ -92,7 +95,7 @@ pub enum Norm {
     Neut(Neut),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Neut {
     // Rec(Ident),
     Absurd(Box<Absurd<Norm, Self>>),
@@ -100,7 +103,7 @@ pub enum Neut {
     Var(Ident),
 }
 
-/// Helper functions for Norm construction
+/// Helper functions for easier `Norm` construction
 impl Norm {
     pub fn absurd(absurd_exp: Absurd<Self, Neut>) -> Self {
         Norm::Neut(Neut::absurd(absurd_exp))
@@ -123,7 +126,7 @@ impl Norm {
     }
 }
 
-/// Helper functions for Neut construction
+/// Helper functions for easier `Neut` construction
 impl Neut {
     pub fn absurd(absurd_exp: Absurd<Norm, Self>) -> Self {
         Neut::Absurd(Box::new(absurd_exp))
@@ -131,5 +134,52 @@ impl Neut {
 
     pub fn app(app_exp: App<Norm, Self>) -> Self {
         Neut::App(Box::new(app_exp))
+    }
+}
+
+impl<T> TypedName<T> {
+    pub fn from<U>(value: TypedName<U>) -> Self
+    where
+        T: From<U>,
+    {
+        TypedName {
+            name: value.name,
+            typ: From::from(value.typ),
+        }
+    }
+}
+
+impl From<Norm> for Exp {
+    fn from(value: Norm) -> Self {
+        match value {
+            Norm::Univ(lvl) => Exp::Univ(lvl),
+            Norm::Bottom => Exp::Bottom,
+            Norm::Pi(pi) => Exp::pi(Pi {
+                param: TypedName::from(pi.param),
+                ret_typ: From::from(pi.ret_typ),
+            }),
+            Norm::Fun(fun) => Exp::fun(Fun {
+                param: TypedName::from(fun.param),
+                body: From::from(fun.body),
+            }),
+            Norm::Neut(neut) => From::from(neut),
+        }
+    }
+}
+
+impl From<Neut> for Exp {
+    fn from(value: Neut) -> Self {
+        match value {
+            Neut::Absurd(absurd) => Exp::absurd(Absurd {
+                scr: From::from(absurd.scr),
+                motive_param: absurd.motive_param,
+                motive_body: From::from(absurd.motive_body),
+            }),
+            Neut::App(app) => Exp::app(App {
+                fun: From::from(app.fun),
+                arg: From::from(app.arg),
+            }),
+            Neut::Var(id) => Exp::Var(id),
+        }
     }
 }

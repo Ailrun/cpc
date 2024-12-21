@@ -54,6 +54,7 @@ pub struct AppDom {
     pub arg: DomNorm,
 }
 
+/// Helper functions for easier `Dom` construction
 impl Dom {
     pub fn absurd(typ: Dom, absurd_dom: AbsurdDom) -> Self {
         Dom::Neut(Box::new(typ), DomNeut::absurd(absurd_dom))
@@ -76,6 +77,7 @@ impl Dom {
     }
 }
 
+/// Helper functions for easier `DomNeut` construction
 impl DomNeut {
     pub fn absurd(absurd_dom: AbsurdDom) -> Self {
         DomNeut::Absurd(Box::new(absurd_dom))
