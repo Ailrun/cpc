@@ -1,6 +1,12 @@
+/// * Normalization Module Based on Normalization-by-Evaluation (NbE)
+///
+/// This module provides normalization methods (`nbe` and `nbe_typ`)
+/// for a well-typed term (and well-formed type). Note that,
+/// for well-typed term, normalization should never fail, any
+/// errorneous cases in this module call `panic!`.
 use std::{collections::HashMap, convert::Infallible};
 
-use crate::kernel::{domain::*, syntax::*};
+use crate::{kernel::domain::*, syntax::*};
 
 use Dom as D;
 use DomNeut as DR;
@@ -89,7 +95,7 @@ impl Exp {
     }
 }
 
-/** TODO: Extract panics */
+/// TODO: Extract panics
 fn eval_app(fun: Dom, arg: Dom) -> Dom {
     match fun {
         D::Fun(fun_dom) => {

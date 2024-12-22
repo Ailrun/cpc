@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cpc::kernel::{syntax::*, typecheck::*};
+use cpc::{syntax::*, kernel::typecheck::*};
 
 use Exp as E;
 use Norm as EN;

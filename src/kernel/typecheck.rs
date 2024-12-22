@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::kernel::syntax::*;
+use crate::syntax::*;
 
 use Exp as E;
 use Norm as EN;

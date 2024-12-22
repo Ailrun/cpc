@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::kernel::syntax::*;
+use crate::syntax::*;
 
 pub type Env = HashMap<Ident, Dom>;
 
