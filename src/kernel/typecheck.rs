@@ -5,7 +5,7 @@ use crate::syntax::*;
 use Exp as E;
 use Norm as EN;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum TypeCheckError {
     NonType(Norm),
     NonFunction(Norm),
