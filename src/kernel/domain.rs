@@ -1,3 +1,10 @@
+//! # Semantic Domain For Evaluation
+//!
+//! The domain ([Dom]) in this module is used to evaluate [Exp].
+//! Each [Dom] value corresponds to a β-normal form of [Exp],
+//! so once we convert [Exp] into a correct [Dom] value, all we
+//! need to do is reading the [Dom] value back into a correct
+//! βη-normal form by η expanding it in the course.
 use std::collections::HashMap;
 
 use crate::syntax::*;
@@ -74,6 +81,17 @@ impl Dom {
 
     pub fn var(typ: Dom, id: Ident) -> Self {
         Dom::Neut(Box::new(typ), DomNeut::Var(id))
+    }
+}
+
+/// Helper functions for easier `Dom` destruction
+impl Dom {
+    pub fn as_neut(self) -> Result<DomNeut, Dom> {
+        if let Dom::Neut(_, dom) = self {
+            Ok(dom)
+        } else {
+            Err(self)
+        }
     }
 }
 

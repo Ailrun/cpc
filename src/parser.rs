@@ -1,18 +1,46 @@
+#![allow(rustdoc::private_intra_doc_links)]
+//! # Parser of CPC
+//!
+//! This module implements following parsers:
+//! ## Main Parser
+//! - [full_expression]
+//! ## Sub-Parsers
+//! ### Expression Case Parsers
+//! - [expression]
+//! - [pi_expression]
+//! - [lambda_expression]
+//! - [absurd_expression]
+//! - [applicative_expression]
+//! - [atomic_expression]
+//! ### Expression Helpers
+//! - [binder_expression]
+//! - [parameter]
 use nom::{
     branch::*, bytes::complete::*, character::complete::*, combinator::*, error::Error, sequence::*, Finish, IResult, Parser
 };
 
 use crate::syntax::*;
 
+#[doc(hidden)]
 type CpcInput<'a> = &'a str;
+#[doc(hidden)]
 type CpcError<'a> = Error<CpcInput<'a>>;
+#[doc(hidden)]
 type CpcResult<'a, T> = IResult<CpcInput<'a>, T>;
 
-/// ** Main Parser
+////////////////////////////////////////////////////////////
+// Main Parser
+////////////////////////////////////////////////////////////
 
 pub fn full_expression(input: CpcInput) -> Result<Exp, CpcError> {
     delimited(multispace0, expression, eof).parse(input).finish().map(|(_, exp)| exp)
 }
+
+////////////////////////////////////////////////////////////
+// Sub-Parsers
+////////////////////////////////////////////////////////////
+
+// Expression Case Parsers
 
 fn expression(input: CpcInput) -> CpcResult<Exp> {
     alt((
@@ -23,10 +51,6 @@ fn expression(input: CpcInput) -> CpcResult<Exp> {
     ))
     .parse(input)
 }
-
-/// ** Sub-Parsers
-
-/// *** Expression Case Parsers
 fn pi_expression(input: CpcInput) -> CpcResult<Exp> {
     let pi_binder = alt((keyword("forall"), keyword("Pi"), keyword("∀"), keyword("Π")));
     let pi_separator = symbol(".");
@@ -82,7 +106,7 @@ fn atomic_expression(input: CpcInput) -> CpcResult<Exp> {
     .parse(input)
 }
 
-/// *** Expression Helpers
+// Expression Helpers
 
 fn binder_expression<'a, O1, O2, T1, T2, F>(
     binder_keyword: T1,
@@ -98,7 +122,7 @@ where
         .map(move |(_, param, _, body)| f(param, body))
 }
 
-/// *** Non-expression Parsers
+// Non-expression Parsers
 
 fn parameter(input: CpcInput) -> CpcResult<TypedName<Typ>> {
     parened(separated_pair(identifier, symbol(":"), expression))
@@ -106,9 +130,11 @@ fn parameter(input: CpcInput) -> CpcResult<TypedName<Typ>> {
         .parse(input)
 }
 
-/// ** Other Helpers
+////////////////////////////////////////////////////////////
+// Other Helpers
+////////////////////////////////////////////////////////////
 
-/// *** Extra Parser Combinators
+// Extra Parser Combinators
 
 fn parened<'a, O, T>(p: T) -> impl Parser<CpcInput<'a>, O, CpcError<'a>>
 where
@@ -117,7 +143,7 @@ where
     delimited(symbol("("), p, symbol(")"))
 }
 
-/// *** Lexer-like Helpers
+// Lexer-like Helpers
 
 fn identifier(input: CpcInput) -> CpcResult<Ident> {
     let first_character = satisfy(|c| c.is_alphabetic() || c == '_');
@@ -149,13 +175,13 @@ fn is_not_keyword(s: &str) -> bool {
     !KEYWORD_LIST.contains(&s)
 }
 
-/// *** Constants for Identifier-likes
+/// ### Constants for Identifier-likes
 
 const KEYWORD_LIST: [&str; 11] = [
     "forall", "Pi", "∀", "Π", "fun", "lambda", "λ", "Univ", "Bottom", "absurd", "return",
 ];
 
-/// *** Debugging helpers
+/// ### Debugging helpers
 
 #[cfg(test)]
 #[allow(dead_code)]

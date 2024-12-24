@@ -1,3 +1,7 @@
+//! # Type Checking/Inference Implementation
+//!
+//! This module provides both type checking and inference functions
+//! based on NbE algorithm from [Module nbe](crate::kernel::nbe).
 use std::collections::HashMap;
 
 use crate::syntax::*;
@@ -5,6 +9,9 @@ use crate::syntax::*;
 use Exp as E;
 use Norm as EN;
 
+/// Possible Errors during Type Checking/Inference
+///
+/// TODO: Give error codes
 #[derive(Clone, Debug)]
 pub enum TypeCheckError {
     NonType(Norm),

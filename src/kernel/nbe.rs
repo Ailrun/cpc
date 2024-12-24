@@ -1,9 +1,13 @@
-/// * Normalization Module Based on Normalization-by-Evaluation (NbE)
-///
-/// This module provides normalization methods (`nbe` and `nbe_typ`)
-/// for a well-typed term (and well-formed type). Note that,
-/// for well-typed term, normalization should never fail, any
-/// errorneous cases in this module call `panic!`.
+#![allow(rustdoc::private_intra_doc_links)]
+//! # Normalization Module Based on Normalization-by-Evaluation (NbE)
+//!
+//! This module provides normalization methods (`nbe` and `nbe_typ`)
+//! for a well-typed term (and well-formed type). Note that,
+//! for well-typed term, normalization should never fail, any
+//! errorneous cases in this module call `panic!`.
+//!
+//! Actual implementation lives in trait implementations of [Exp].
+//! Specifically, one can check its [nbe method](Exp::nbe) and [eval method](Exp::eval).
 use std::{collections::HashMap, convert::Infallible};
 
 use crate::{kernel::domain::*, syntax::*};
@@ -13,6 +17,7 @@ use DomNeut as DR;
 use DomNorm as DN;
 use Exp as E;
 
+/// ## Main Functions for Normalization-by-Evaluation
 impl Exp {
     pub fn nbe(self, typ: Self, ctx: &Ctx) -> Norm {
         let mut env = HashMap::new();
@@ -38,6 +43,7 @@ impl Exp {
     }
 }
 
+/// ## Evaluation into Domain
 impl Exp {
     fn eval(self, env: &Env) -> D {
         match self {
@@ -45,11 +51,11 @@ impl Exp {
             E::Bottom => D::Bottom,
             E::Absurd(absurd_exp) => match absurd_exp.scr.eval(env) {
                 D::Neut(scr_typ, scr) => {
-                    let motive_param = absurd_exp.motive_param.clone();
+                    let motive_param = absurd_exp.motive_param;
                     let motive_body_env = env.clone();
                     let motive_body_exp = absurd_exp.motive_body;
                     let mut dom_typ_env = motive_body_env.clone();
-                    dom_typ_env.insert(motive_param.clone(), D::Neut(scr_typ.clone(), scr.clone()));
+                    dom_typ_env.insert(motive_param.clone(), D::Neut(scr_typ, scr.clone()));
                     let dom_typ = motive_body_exp.clone().eval(&dom_typ_env);
                     D::absurd(
                         dom_typ,
@@ -88,18 +94,20 @@ impl Exp {
             E::App(app_exp) => {
                 let fun = app_exp.fun.eval(env);
                 let arg = app_exp.arg.eval(env);
-                eval_app(fun, arg)
+                reduce_app(fun, arg)
             }
             E::Var(id) => env[&id].clone(),
         }
     }
 }
 
+/// Reduce Domain-value Application
+///
 /// TODO: Extract panics
-fn eval_app(fun: Dom, arg: Dom) -> Dom {
+fn reduce_app(fun: Dom, arg: Dom) -> Dom {
     match fun {
         D::Fun(fun_dom) => {
-            let mut new_env = fun_dom.body_env.clone();
+            let mut new_env = fun_dom.body_env;
             new_env.insert(fun_dom.param, arg);
             fun_dom.body_exp.eval(&new_env)
         }
@@ -107,7 +115,7 @@ fn eval_app(fun: Dom, arg: Dom) -> Dom {
             let D::Pi(pi_dom) = *dom_typ else {
                 panic!("Invalid dom_typ {:?}", *dom_typ)
             };
-            let mut new_env = pi_dom.ret_typ_env.clone();
+            let mut new_env = pi_dom.ret_typ_env;
             new_env.insert(pi_dom.param, arg.clone());
             let arg = DN::Ann(pi_dom.param_typ, arg);
             D::app(pi_dom.ret_typ_exp.eval(&new_env), AppDom { fun, arg })
@@ -116,44 +124,34 @@ fn eval_app(fun: Dom, arg: Dom) -> Dom {
     }
 }
 
+/// ## Readback from Domain
 trait Readback {
     type NormalizedSyntax;
 
     fn readback(self, names: &Vec<Ident>) -> Self::NormalizedSyntax;
 }
 
-fn eval_typ_for_binder(
-    param_name: String,
-    param_typ: Dom,
-    typ: Typ,
-    mut env: Env,
-    names: &Vec<Ident>,
-) -> (TypedName<Norm>, Dom, Vec<Ident>, Dom) {
-    let param = TypedName {
-        name: param_name.clone(),
-        typ: param_typ.clone().readback_typ(names),
-    };
-    let param_itself = D::var(param_typ, param_name.clone());
-    env.insert(param_name.clone(), param_itself.clone());
-    let mut newnames = names.clone();
-    newnames.push(param_name);
-    (param, param_itself, newnames, typ.eval(&env))
-}
-
 impl Dom {
+    /// Special Readback from Domain as a Type
     fn readback_typ(self, names: &Vec<Ident>) -> Norm {
         match self {
             D::Univ(lvl) => Norm::Univ(lvl),
             D::Bottom => Norm::Bottom,
             D::Pi(pi_dom) => {
-                let (param, _, newnames, ret_typ_dom) = eval_typ_for_binder(
-                    pi_dom.param,
-                    pi_dom.param_typ,
-                    pi_dom.ret_typ_exp,
-                    pi_dom.ret_typ_env,
-                    names,
-                );
-                let ret_typ = ret_typ_dom.readback_typ(&newnames);
+                let PiDom {
+                    param: param_name,
+                    param_typ,
+                    mut ret_typ_env,
+                    ret_typ_exp,
+                } = *pi_dom;
+                let param = TypedName {
+                    name: param_name.clone(),
+                    typ: param_typ.clone().readback_typ(names),
+                };
+                ret_typ_env.insert(param_name.clone(), D::var(param_typ, param_name.clone()));
+                let mut ret_typ_names = names.clone();
+                ret_typ_names.push(param_name);
+                let ret_typ = ret_typ_exp.eval(&ret_typ_env).readback_typ(&ret_typ_names);
                 Norm::pi(Pi { param, ret_typ })
             }
             D::Neut(_typ, neut) => Norm::Neut(neut.readback(names)),
@@ -161,14 +159,14 @@ impl Dom {
         }
     }
 
+    /// Helper Readback for a Neutral Domain Value
     fn readback_as_neut<T>(self, names: &Vec<Ident>, err: T) -> Neut
     where
-        T: Fn(Self) -> Infallible,
+        T: FnOnce(Self) -> Infallible,
     {
-        let D::Neut(_, dom) = self else {
-            into_bang(err(self))
-        };
-        dom.readback(names)
+        self.as_neut()
+            .unwrap_or_else(|x| into_bang(err(x)))
+            .readback(names)
     }
 }
 
@@ -178,23 +176,22 @@ impl Readback for DomNeut {
     fn readback(self, names: &Vec<Ident>) -> Neut {
         match self {
             DR::Absurd(absurd_dom) => {
-                let scr = absurd_dom.scr.readback(names);
-                let (
-                    TypedName {
-                        name: motive_param,
-                        typ: _,
-                    },
-                    _,
-                    newnames,
-                    motive_body_dom,
-                ) = eval_typ_for_binder(
-                    absurd_dom.motive_param.clone(),
-                    D::Bottom,
-                    absurd_dom.motive_body_exp,
-                    absurd_dom.motive_body_env,
-                    names,
+                let AbsurdDom {
+                    scr,
+                    motive_param,
+                    mut motive_body_env,
+                    motive_body_exp,
+                } = *absurd_dom;
+                let scr = scr.readback(names);
+                motive_body_env.insert(
+                    motive_param.clone(),
+                    D::var(D::Bottom, motive_param.clone()),
                 );
-                let motive_body = motive_body_dom.readback_typ(&newnames);
+                let mut motive_body_names = names.clone();
+                motive_body_names.push(motive_param.clone());
+                let motive_body = motive_body_exp
+                    .eval(&motive_body_env)
+                    .readback_typ(&motive_body_names);
                 Neut::absurd(Absurd {
                     scr,
                     motive_param,
@@ -220,14 +217,23 @@ impl Readback for DomNorm {
             D::Univ(_) => dom.readback_typ(names),
             D::Bottom => Norm::Neut(dom.readback_as_neut(names, inconsistent_panic)),
             D::Pi(pi_dom) => {
-                let (param, param_itself, newnames, ret_typ) = eval_typ_for_binder(
-                    pi_dom.param,
-                    pi_dom.param_typ,
-                    pi_dom.ret_typ_exp,
-                    pi_dom.ret_typ_env,
-                    names,
-                );
-                let body = DN::Ann(ret_typ, eval_app(dom, param_itself)).readback(&newnames);
+                let PiDom {
+                    param: param_name,
+                    param_typ,
+                    mut ret_typ_env,
+                    ret_typ_exp,
+                } = *pi_dom;
+                let param = TypedName {
+                    name: param_name.clone(),
+                    typ: param_typ.clone().readback_typ(names),
+                };
+                let param_itself = D::var(param_typ, param_name.clone());
+                ret_typ_env.insert(param_name.clone(), param_itself.clone());
+                let mut ret_typ_names = names.clone();
+                ret_typ_names.push(param_name);
+                let ret_typ_dom = ret_typ_exp.eval(&ret_typ_env);
+                let body =
+                    DN::Ann(ret_typ_dom, reduce_app(dom, param_itself)).readback(&ret_typ_names);
                 Norm::fun(Fun { param, body })
             }
             D::Neut(_, _) => Norm::Neut(dom.readback_as_neut(names, non_neutral_exp_panic)),
@@ -236,16 +242,18 @@ impl Readback for DomNorm {
     }
 }
 
-/// TODO: Move to a common util module
-fn into_bang(value: Infallible) -> ! {
-    match value {}
-}
+// ## Panic Functions
+// TODO: Panic code should be implemented
 
+/// Helper for Inconsistency Case
+///
 /// TODO: Give panic codes
 fn inconsistent_panic(dom: Dom) -> Infallible {
     panic!("Inconsistent expression {:?} is found", dom)
 }
 
+/// Helper for Non-neutral Expression Case when Expecting Neutral
+///
 /// TODO: Give panic codes
 fn non_neutral_exp_panic(dom: Dom) -> Infallible {
     panic!(
@@ -254,7 +262,18 @@ fn non_neutral_exp_panic(dom: Dom) -> Infallible {
     )
 }
 
+/// Helper for Non-type Expression Case when Expecting Type
+///
 /// TODO: Give panic codes
 fn non_type_exp_panic(dom: Dom) -> Infallible {
     panic!("Expression {:?} is not a type", dom)
+}
+
+// ## Other Helpers
+
+/// [Infallible] into [!]
+///
+/// TODO: Move to a common util module
+fn into_bang(value: Infallible) -> ! {
+    match value {}
 }

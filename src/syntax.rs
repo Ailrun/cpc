@@ -1,11 +1,15 @@
+//! # Abstract Syntax Tree (AST) of CPC
+
 use std::collections::HashMap;
 
 pub type Ident = String;
 
-/// `Level` starts from 0.
-/// TODO: We should use big integer here to avoid inconsistency bug.
+/// # Universe Level Starting from 0.
+///
+/// TODO: We should use a big integer here to avoid inconsistency bugs.
 pub type Level = u128;
 
+/// # Name ([Ident]) with a Type
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TypedName<T> {
     pub name: Ident,
@@ -22,6 +26,7 @@ pub struct TypedName<T> {
 //     pub cons: Vec<TypedName>,
 // }
 
+/// # AST for An Expression/Type
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Exp {
     Univ(Level),
@@ -36,8 +41,16 @@ pub enum Exp {
     Var(Ident),
 }
 
+/// Type as an Expression
+///
+/// In a dependently-typed world, expression can also be a type.
 pub type Typ = Exp;
 
+/// # Absurd case
+///
+/// Type parameter `N` represents **N**ormal subcase, and `R`
+/// represents Neut**r**al subcase. In a non-normalized
+/// expression, they are both `Self`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Absurd<N, R> {
     pub scr: R,
@@ -45,25 +58,40 @@ pub struct Absurd<N, R> {
     pub motive_body: N,
 }
 
+/// # Pi case
+///
+/// Type parameter `N` represents **N**ormal subcase, and `R`
+/// represents Neut**r**al subcase. In a non-normalized
+/// expression, they are both `Self`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Pi<N> {
     pub param: TypedName<N>,
     pub ret_typ: N,
 }
 
+/// # Fun case
+///
+/// Type parameter `N` represents **N**ormal subcase, and `R`
+/// represents Neut**r**al subcase. In a non-normalized
+/// expression, they are both `Self`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Fun<N> {
     pub param: TypedName<N>,
     pub body: N,
 }
 
+/// # App case
+///
+/// Type parameter `N` represents **N**ormal subcase, and `R`
+/// represents Neut**r**al subcase. In a non-normalized
+/// expression, they are both `Self`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct App<N, R> {
     pub fun: R,
     pub arg: N,
 }
 
-/// Helper functions for easier `Exp` construction
+/// ## Helper functions for easier [Exp] construction
 impl Exp {
     pub fn absurd(absurd_exp: Absurd<Self, Self>) -> Self {
         Exp::Absurd(Box::new(absurd_exp))
@@ -84,6 +112,7 @@ impl Exp {
 
 pub type Ctx = HashMap<Ident, Norm>;
 
+/// # AST for Normal Expression
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Norm {
     Univ(Level),
@@ -95,6 +124,7 @@ pub enum Norm {
     Neut(Neut),
 }
 
+/// # AST for Neutral Expression
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Neut {
     // Rec(Ident),
@@ -103,7 +133,7 @@ pub enum Neut {
     Var(Ident),
 }
 
-/// Helper functions for easier `Norm` construction
+/// ## Helper functions for easier [Norm] construction
 impl Norm {
     pub fn absurd(absurd_exp: Absurd<Self, Neut>) -> Self {
         Norm::Neut(Neut::absurd(absurd_exp))
@@ -126,7 +156,7 @@ impl Norm {
     }
 }
 
-/// Helper functions for easier `Neut` construction
+/// ## Helper functions for easier [Neut] construction
 impl Neut {
     pub fn absurd(absurd_exp: Absurd<Norm, Self>) -> Self {
         Neut::Absurd(Box::new(absurd_exp))
