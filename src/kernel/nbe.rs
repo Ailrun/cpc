@@ -242,7 +242,9 @@ impl Readback for DomNorm {
     }
 }
 
-// ## Panic Functions
+////////////////////////////////////////////////////////////
+// Panic Functions
+////////////////////////////////////////////////////////////
 // TODO: Panic code should be implemented
 
 /// Helper for Inconsistency Case
@@ -269,11 +271,12 @@ fn non_type_exp_panic(dom: Dom) -> Infallible {
     panic!("Expression {:?} is not a type", dom)
 }
 
-// ## Other Helpers
+////////////////////////////////////////////////////////////
+// Other Helpers
+////////////////////////////////////////////////////////////
+// TODO: Move to a common util module
 
 /// [Infallible] into [!]
-///
-/// TODO: Move to a common util module
 fn into_bang(value: Infallible) -> ! {
     match value {}
 }

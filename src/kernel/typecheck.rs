@@ -166,7 +166,7 @@ impl Norm {
 }
 
 impl Neut {
-    fn check_alpha_eq(self, other: Self, renaming: &HashMap<String, String>) -> bool {
+    fn check_alpha_eq(self, other: Self, renaming: &Renaming) -> bool {
         match (self, other) {
             (Neut::Absurd(self_absurd), Neut::Absurd(other_absurd)) => {
                 if self_absurd.scr.check_alpha_eq(other_absurd.scr, renaming) {
