@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Dom","DomNeut","DomNorm"],"struct":["AbsurdDom","AppDom","FunDom","PiDom"],"type":["Env"]};

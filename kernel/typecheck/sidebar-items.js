@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TypeCheckError"],"fn":["check","check_subtyp","infer","infer_typ_lvl","subst_nbe_typ"],"type":["Renaming","TypeCheck"]};
