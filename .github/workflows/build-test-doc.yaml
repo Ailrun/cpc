@@ -41,4 +41,4 @@ jobs:
       uses: JamesIves/github-pages-deploy-action@v4
       if: ${{ env.DOC_DEPLOY == 'true' }}
       with:
-        folder: target/doc/cpc
+        folder: target/doc/
