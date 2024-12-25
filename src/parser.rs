@@ -32,7 +32,12 @@ type CpcResult<'a, T> = IResult<CpcInput<'a>, T>;
 // Main Parser
 ////////////////////////////////////////////////////////////
 
-pub fn full_expression(input: CpcInput) -> Result<Exp, CpcError> {
+/// # Parser for Complete Expression
+///
+/// This parser reads an expression by consuming
+/// the entire input. Note that this ignores whitespaces
+/// at the beginning of the input as well as at the end.
+pub fn full_expression(input: &str) -> Result<Exp, Error<&str>> {
     delimited(multispace0, expression, eof).parse(input).finish().map(|(_, exp)| exp)
 }
 
@@ -51,6 +56,7 @@ fn expression(input: CpcInput) -> CpcResult<Exp> {
     ))
     .parse(input)
 }
+
 fn pi_expression(input: CpcInput) -> CpcResult<Exp> {
     let pi_binder = alt((keyword("forall"), keyword("Pi"), keyword("∀"), keyword("Π")));
     let pi_separator = symbol(".");
@@ -108,6 +114,12 @@ fn atomic_expression(input: CpcInput) -> CpcResult<Exp> {
 
 // Expression Helpers
 
+/// # General Helper Parser for Single-variable Binder Expression.
+///
+/// It first parses `binder_keyword`, [parameter],
+/// `body_separator`, and [expression] (as a body).
+/// Then, it uses `f` to combine the parameter and
+/// and body.
 fn binder_expression<'a, O1, O2, T1, T2, F>(
     binder_keyword: T1,
     body_separator: T2,
@@ -124,6 +136,9 @@ where
 
 // Non-expression Parsers
 
+/// # Parameter Parser
+///
+/// This parses a string of `(<ident> : <expression>)`.
 fn parameter(input: CpcInput) -> CpcResult<TypedName<Typ>> {
     parened(separated_pair(identifier, symbol(":"), expression))
         .map(|(name, typ)| TypedName { name, typ })
