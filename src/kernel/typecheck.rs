@@ -108,6 +108,7 @@ fn check_subtyp(subtyp: Norm, supertyp: Norm, renaming: &Renaming) -> bool {
     match (subtyp, supertyp) {
         (Norm::Univ(lower_lvl), Norm::Univ(higher_lvl)) => lower_lvl <= higher_lvl,
         (Norm::Pi(sub_pi), Norm::Pi(super_pi)) => {
+            // Do we want contravariant subtyping here?
             if sub_pi
                 .param
                 .typ
@@ -120,7 +121,7 @@ fn check_subtyp(subtyp: Norm, supertyp: Norm, renaming: &Renaming) -> bool {
                 false
             }
         }
-        (_, _) => todo!(),
+        (subtyp, supertyp) => subtyp.check_alpha_eq(supertyp, renaming),
     }
 }
 
