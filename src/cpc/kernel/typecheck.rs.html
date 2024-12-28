@@ -188,7 +188,8 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
 //!
 //! This module provides both type checking and inference functions
 //! based on NbE algorithm from [Module nbe](crate::kernel::nbe).
@@ -298,7 +299,8 @@
     <span class="kw">match </span>(subtyp, supertyp) {
         (Norm::Univ(lower_lvl), Norm::Univ(higher_lvl)) =&gt; lower_lvl &lt;= higher_lvl,
         (Norm::Pi(sub_pi), Norm::Pi(super_pi)) =&gt; {
-            <span class="kw">if </span>sub_pi
+            <span class="comment">// Do we want contravariant subtyping here?
+            </span><span class="kw">if </span>sub_pi
                 .param
                 .typ
                 .check_alpha_eq(super_pi.param.typ, renaming)
@@ -310,7 +312,7 @@
                 <span class="bool-val">false
             </span>}
         }
-        (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
+        (subtyp, supertyp) =&gt; subtyp.check_alpha_eq(supertyp, renaming),
     }
 }
 
