@@ -20,29 +20,27 @@ use Exp as E;
 /// ## Main Functions for Normalization-by-Evaluation
 impl Exp {
     pub fn nbe(self, typ: Self, ctx: &Ctx) -> Norm {
-        let (env, ids) = Exp::build_initial(ctx);
+        let env = build_initial_env(ctx);
         DN {
             typ: typ.eval(&env),
             dom: self.eval(&env),
         }
-        .readback(&ids)
+        .readback(&mut env.into_keys().collect())
     }
 
     pub fn nbe_typ(self, ctx: &Ctx) -> Norm {
-        let (env, ids) = Exp::build_initial(ctx);
-        self.eval(&env).readback_typ(&ids)
+        let env = build_initial_env(ctx);
+        self.eval(&env).readback_typ(&mut env.into_keys().collect())
     }
+}
 
-    fn build_initial(ctx: &Ctx) -> (Env, Idents) {
-        let mut env = HashMap::new();
-        let mut ids = vec![];
-        for (var, var_typ) in ctx.iter() {
-            let var_typ_dom = Exp::from(var_typ.clone()).eval(&env);
-            env.insert(var.clone(), D::from((var_typ_dom, var.clone())));
-            ids.push(var.clone());
-        }
-        (env, ids)
+fn build_initial_env(ctx: &Ctx) -> Env {
+    let mut env = HashMap::new();
+    for (var, var_typ) in ctx.iter() {
+        let var_typ_dom = Exp::from(var_typ.clone()).eval(&env);
+        env.insert(var.clone(), D::from((var_typ_dom, var.clone())));
     }
+    env
 }
 
 /// ## Evaluation into Domain
@@ -54,11 +52,17 @@ impl Exp {
             E::Absurd(absurd_exp) => match absurd_exp.scr.eval(env) {
                 D::Neut(scr_typ, scr) => {
                     let motive_param = absurd_exp.motive_param;
-                    let motive_body_env = env.clone();
+                    let mut motive_body_env = env.clone();
                     let motive_body_exp = absurd_exp.motive_body;
-                    let mut dom_typ_env = motive_body_env.clone();
-                    dom_typ_env.insert(motive_param.clone(), D::from((scr_typ, scr.clone())));
-                    let dom_typ = motive_body_exp.clone().eval(&dom_typ_env);
+
+                    let prev_entry = motive_body_env
+                        .insert(motive_param.clone(), D::from((scr_typ, scr.clone())));
+                    let dom_typ = motive_body_exp.clone().eval(&motive_body_env);
+                    match prev_entry {
+                        Some(value) => motive_body_env.insert(motive_param.clone(), value),
+                        None => motive_body_env.remove(&motive_param),
+                    };
+
                     D::from((
                         dom_typ,
                         AbsurdDom {
@@ -135,12 +139,12 @@ type Idents = Vec<Ident>;
 trait Readback {
     type NormalizedSyntax;
 
-    fn readback(self, ids: &Idents) -> Self::NormalizedSyntax;
+    fn readback(self, ids: &mut Idents) -> Self::NormalizedSyntax;
 }
 
 impl Dom {
     /// Special Readback from Domain as a Type
-    fn readback_typ(self, ids: &Idents) -> Norm {
+    fn readback_typ(self, ids: &mut Idents) -> Norm {
         match self {
             D::Univ(lvl) => Norm::from(lvl),
             D::Bottom => Norm::Bottom,
@@ -156,9 +160,9 @@ impl Dom {
                     typ: param_typ.clone().readback_typ(ids),
                 };
                 ret_typ_env.insert(param_name.clone(), D::from((param_typ, param_name.clone())));
-                let mut ret_typ_ids = ids.clone();
-                ret_typ_ids.push(param_name);
-                let ret_typ = ret_typ_exp.eval(&ret_typ_env).readback_typ(&ret_typ_ids);
+                ids.push(param_name);
+                let ret_typ = ret_typ_exp.eval(&ret_typ_env).readback_typ(ids);
+                ids.pop();
                 Norm::from(Pi { param, ret_typ })
             }
             D::Neut(_typ, neut) => Norm::from(neut.readback(ids)),
@@ -167,7 +171,7 @@ impl Dom {
     }
 
     /// Helper Readback for a Neutral Domain Value
-    fn readback_as_neut(self, ids: &Idents, err: fn(Self) -> !) -> Neut {
+    fn readback_as_neut(self, ids: &mut Idents, err: fn(Self) -> !) -> Neut {
         DomNeut::try_from(self)
             .unwrap_or_else(|x| err(x))
             .readback(ids)
@@ -177,7 +181,7 @@ impl Dom {
 impl Readback for DomNeut {
     type NormalizedSyntax = Neut;
 
-    fn readback(self, ids: &Idents) -> Neut {
+    fn readback(self, ids: &mut Idents) -> Neut {
         match self {
             DR::Absurd(absurd_dom) => {
                 let AbsurdDom {
@@ -191,11 +195,9 @@ impl Readback for DomNeut {
                     motive_param.clone(),
                     D::from((D::Bottom, motive_param.clone())),
                 );
-                let mut motive_body_ids = ids.clone();
-                motive_body_ids.push(motive_param.clone());
-                let motive_body = motive_body_exp
-                    .eval(&motive_body_env)
-                    .readback_typ(&motive_body_ids);
+                ids.push(motive_param.clone());
+                let motive_body = motive_body_exp.eval(&motive_body_env).readback_typ(ids);
+                ids.pop();
                 Neut::from(Absurd {
                     scr,
                     motive_param,
@@ -215,7 +217,7 @@ impl Readback for DomNeut {
 impl Readback for DomNorm {
     type NormalizedSyntax = Norm;
 
-    fn readback(self, ids: &Idents) -> Norm {
+    fn readback(self, ids: &mut Idents) -> Norm {
         let DN { typ, dom } = self;
         match typ {
             D::Univ(_) => dom.readback_typ(ids),
@@ -233,14 +235,14 @@ impl Readback for DomNorm {
                 };
                 let param_itself = D::from((param_typ, param_name.clone()));
                 ret_typ_env.insert(param_name.clone(), param_itself.clone());
-                let mut ret_typ_ids = ids.clone();
-                ret_typ_ids.push(param_name);
+                ids.push(param_name);
                 let ret_typ_dom = ret_typ_exp.eval(&ret_typ_env);
                 let body = DN {
                     typ: ret_typ_dom,
                     dom: reduce_app(dom, param_itself),
                 }
-                .readback(&ret_typ_ids);
+                .readback(ids);
+                ids.pop();
                 Norm::from(Fun { param, body })
             }
             D::Neut(_, _) => Norm::from(dom.readback_as_neut(ids, non_neutral_exp_panic)),
