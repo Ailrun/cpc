@@ -23,8 +23,8 @@ pub type TypeCheck<T> = Result<T, TypeCheckError>;
 
 fn subst_nbe_typ(param: TypedName<Norm>, body: Typ, arg: Exp, ctx: &Ctx) -> Norm {
     let param = TypedName::from(param);
-    E::app(App {
-        fun: E::fun(Fun { param, body }),
+    E::from(App {
+        fun: E::from(Fun { param, body }),
         arg,
     })
     .nbe_typ(ctx)
@@ -32,8 +32,8 @@ fn subst_nbe_typ(param: TypedName<Norm>, body: Typ, arg: Exp, ctx: &Ctx) -> Norm
 
 pub fn infer(exp: Exp, ctx: &Ctx) -> Result<Norm, TypeCheckError> {
     let typ = match exp {
-        E::Univ(lvl) => EN::Univ(lvl + 1),
-        E::Bottom => EN::Univ(0),
+        E::Univ(lvl) => EN::from(lvl + 1),
+        E::Bottom => EN::from(0),
         E::Absurd(absurd) => {
             check(absurd.scr.clone(), EN::Bottom, ctx)?;
             let mut newctx = ctx.clone();
@@ -54,14 +54,14 @@ pub fn infer(exp: Exp, ctx: &Ctx) -> Result<Norm, TypeCheckError> {
             let mut newctx = ctx.clone();
             newctx.insert(pi.param.name.clone(), pi.param.typ.clone().nbe_typ(ctx));
             let ret_lvl = infer_typ_lvl(pi.ret_typ, &newctx)?;
-            EN::Univ(param_lvl.max(ret_lvl))
+            EN::from(param_lvl.max(ret_lvl))
         }
         E::Fun(fun) => {
             infer_typ_lvl(fun.param.typ.clone(), &ctx)?;
             let mut newctx = ctx.clone();
             newctx.insert(fun.param.name.clone(), fun.param.typ.clone().nbe_typ(ctx));
             let ret_typ = infer(fun.body, &newctx)?;
-            EN::pi(Pi {
+            EN::from(Pi {
                 param: TypedName {
                     name: fun.param.name,
                     typ: fun.param.typ.nbe_typ(ctx),

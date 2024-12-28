@@ -28,8 +28,9 @@ pub enum DomNeut {
 }
 
 #[derive(Clone, Debug)]
-pub enum DomNorm {
-    Ann(Dom, Dom),
+pub struct DomNorm {
+    pub typ: Dom,
+    pub dom: Dom,
 }
 
 #[derive(Clone, Debug)]
@@ -61,47 +62,60 @@ pub struct AppDom {
     pub arg: DomNorm,
 }
 
-/// Helper functions for easier `Dom` construction
-impl Dom {
-    pub fn absurd(typ: Dom, absurd_dom: AbsurdDom) -> Self {
-        Dom::Neut(Box::new(typ), DomNeut::absurd(absurd_dom))
-    }
+////////////////////////////////////////////////////////////
+// Conversions
+////////////////////////////////////////////////////////////
 
-    pub fn pi(pi_dom: PiDom) -> Self {
-        Dom::Pi(Box::new(pi_dom))
-    }
-
-    pub fn fun(fun_dom: FunDom) -> Self {
-        Dom::Fun(Box::new(fun_dom))
-    }
-
-    pub fn app(typ: Dom, app_dom: AppDom) -> Self {
-        Dom::Neut(Box::new(typ), DomNeut::app(app_dom))
-    }
-
-    pub fn var(typ: Dom, id: Ident) -> Self {
-        Dom::Neut(Box::new(typ), DomNeut::Var(id))
+impl From<Level> for Dom {
+    fn from(value: Level) -> Self {
+        Dom::Univ(value)
     }
 }
 
-/// Helper functions for easier `Dom` destruction
-impl Dom {
-    pub fn as_neut(self) -> Result<DomNeut, Dom> {
-        if let Dom::Neut(_, dom) = self {
+impl From<PiDom> for Dom {
+    fn from(value: PiDom) -> Self {
+        Dom::Pi(Box::new(value))
+    }
+}
+
+impl From<FunDom> for Dom {
+    fn from(value: FunDom) -> Self {
+        Dom::Fun(Box::new(value))
+    }
+}
+
+impl<T: Into<Box<Dom>>, U: Into<DomNeut>> From<(T, U)> for Dom {
+    fn from(value: (T, U)) -> Self {
+        Dom::Neut(T::into(value.0), U::into(value.1))
+    }
+}
+
+impl From<AbsurdDom> for DomNeut {
+    fn from(value: AbsurdDom) -> Self {
+        DomNeut::Absurd(Box::new(value))
+    }
+}
+
+impl From<AppDom> for DomNeut {
+    fn from(value: AppDom) -> Self {
+        DomNeut::App(Box::new(value))
+    }
+}
+
+impl From<Ident> for DomNeut {
+    fn from(value: Ident) -> Self {
+        DomNeut::Var(value)
+    }
+}
+
+impl TryFrom<Dom> for DomNeut {
+    type Error = Dom;
+
+    fn try_from(value: Dom) -> Result<Self, Self::Error> {
+        if let Dom::Neut(_, dom) = value {
             Ok(dom)
         } else {
-            Err(self)
+            Err(value)
         }
-    }
-}
-
-/// Helper functions for easier `DomNeut` construction
-impl DomNeut {
-    pub fn absurd(absurd_dom: AbsurdDom) -> Self {
-        DomNeut::Absurd(Box::new(absurd_dom))
-    }
-
-    pub fn app(app_dom: AppDom) -> Self {
-        DomNeut::App(Box::new(app_dom))
     }
 }

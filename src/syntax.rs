@@ -46,6 +46,30 @@ pub enum Exp {
 /// In a dependently-typed world, expression can also be a type.
 pub type Typ = Exp;
 
+/// Context
+pub type Ctx = HashMap<Ident, Norm>;
+
+/// # AST for Normal Expression
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Norm {
+    Univ(Level),
+    // Data(Ident),
+    // Con(Ident),
+    Bottom,
+    Pi(Box<Pi<Self>>),
+    Fun(Box<Fun<Self>>),
+    Neut(Neut),
+}
+
+/// # AST for Neutral Expression
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Neut {
+    // Rec(Ident),
+    Absurd(Box<Absurd<Norm, Self>>),
+    App(Box<App<Norm, Self>>),
+    Var(Ident),
+}
+
 /// # Absurd case
 ///
 /// Type parameter `N` represents **N**ormal subcase, and `R`
@@ -91,104 +115,75 @@ pub struct App<N, R> {
     pub arg: N,
 }
 
-/// ## Helper functions for easier [Exp] construction
-impl Exp {
-    pub fn absurd(absurd_exp: Absurd<Self, Self>) -> Self {
-        Exp::Absurd(Box::new(absurd_exp))
-    }
-
-    pub fn pi(pi_exp: Pi<Self>) -> Self {
-        Exp::Pi(Box::new(pi_exp))
-    }
-
-    pub fn fun(fun_exp: Fun<Self>) -> Self {
-        Exp::Fun(Box::new(fun_exp))
-    }
-
-    pub fn app(app_exp: App<Self, Self>) -> Self {
-        Exp::App(Box::new(app_exp))
-    }
-}
-
-pub type Ctx = HashMap<Ident, Norm>;
-
-/// # AST for Normal Expression
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Norm {
-    Univ(Level),
-    // Data(Ident),
-    // Con(Ident),
-    Bottom,
-    Pi(Box<Pi<Self>>),
-    Fun(Box<Fun<Self>>),
-    Neut(Neut),
-}
-
-/// # AST for Neutral Expression
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Neut {
-    // Rec(Ident),
-    Absurd(Box<Absurd<Norm, Self>>),
-    App(Box<App<Norm, Self>>),
-    Var(Ident),
-}
-
-/// ## Helper functions for easier [Norm] construction
-impl Norm {
-    pub fn absurd(absurd_exp: Absurd<Self, Neut>) -> Self {
-        Norm::Neut(Neut::absurd(absurd_exp))
-    }
-
-    pub fn pi(pi_exp: Pi<Self>) -> Self {
-        Norm::Pi(Box::new(pi_exp))
-    }
-
-    pub fn fun(fun_exp: Fun<Self>) -> Self {
-        Norm::Fun(Box::new(fun_exp))
-    }
-
-    pub fn app(app_exp: App<Self, Neut>) -> Self {
-        Norm::Neut(Neut::app(app_exp))
-    }
-
-    pub fn var(id: Ident) -> Self {
-        Norm::Neut(Neut::Var(id))
-    }
-}
-
-/// ## Helper functions for easier [Neut] construction
-impl Neut {
-    pub fn absurd(absurd_exp: Absurd<Norm, Self>) -> Self {
-        Neut::Absurd(Box::new(absurd_exp))
-    }
-
-    pub fn app(app_exp: App<Norm, Self>) -> Self {
-        Neut::App(Box::new(app_exp))
-    }
-}
-
+/// ## Ad-hoc simulation of [From] for generic [TypedName]
+///
+/// This simulates `From<TypedName<U>>` for `TypedName<T>`
+/// where `T: From<U>`. However, this cannot be implemented
+/// as a trait implementation as such an implementation will
+/// conflict with `impl<T> From<T> for T` (the blanket reflexive
+/// implementation). Because of that reflexive impl itself,
+/// `From<TypedName<T>>` for `TypedName<T>` is both an instance
+/// of the simulated implementation and the blanket reflexive
+/// implementation, and Rust cannot pick one.
 impl<T> TypedName<T> {
-    pub fn from<U>(value: TypedName<U>) -> Self
-    where
-        T: From<U>,
-    {
+    pub fn from<U: Into<T>>(value: TypedName<U>) -> Self {
         TypedName {
             name: value.name,
-            typ: From::from(value.typ),
+            typ: Into::into(value.typ),
         }
+    }
+}
+
+////////////////////////////////////////////////////////////
+// Conversions
+////////////////////////////////////////////////////////////
+
+impl From<Level> for Exp {
+    fn from(value: Level) -> Self {
+        Exp::Univ(value)
+    }
+}
+
+impl From<Absurd<Exp, Exp>> for Exp {
+    fn from(value: Absurd<Exp, Exp>) -> Self {
+        Exp::Absurd(Box::new(value))
+    }
+}
+
+impl From<Pi<Exp>> for Exp {
+    fn from(value: Pi<Exp>) -> Self {
+        Exp::Pi(Box::new(value))
+    }
+}
+
+impl From<Fun<Exp>> for Exp {
+    fn from(value: Fun<Exp>) -> Self {
+        Exp::Fun(Box::new(value))
+    }
+}
+
+impl From<App<Exp, Exp>> for Exp {
+    fn from(value: App<Exp, Exp>) -> Self {
+        Exp::App(Box::new(value))
+    }
+}
+
+impl From<Ident> for Exp {
+    fn from(value: Ident) -> Self {
+        Exp::Var(value)
     }
 }
 
 impl From<Norm> for Exp {
     fn from(value: Norm) -> Self {
         match value {
-            Norm::Univ(lvl) => Exp::Univ(lvl),
+            Norm::Univ(lvl) => Exp::from(lvl),
             Norm::Bottom => Exp::Bottom,
-            Norm::Pi(pi) => Exp::pi(Pi {
+            Norm::Pi(pi) => Exp::from(Pi {
                 param: TypedName::from(pi.param),
                 ret_typ: From::from(pi.ret_typ),
             }),
-            Norm::Fun(fun) => Exp::fun(Fun {
+            Norm::Fun(fun) => Exp::from(Fun {
                 param: TypedName::from(fun.param),
                 body: From::from(fun.body),
             }),
@@ -200,16 +195,58 @@ impl From<Norm> for Exp {
 impl From<Neut> for Exp {
     fn from(value: Neut) -> Self {
         match value {
-            Neut::Absurd(absurd) => Exp::absurd(Absurd {
+            Neut::Absurd(absurd) => Exp::from(Absurd {
                 scr: From::from(absurd.scr),
                 motive_param: absurd.motive_param,
                 motive_body: From::from(absurd.motive_body),
             }),
-            Neut::App(app) => Exp::app(App {
+            Neut::App(app) => Exp::from(App {
                 fun: From::from(app.fun),
                 arg: From::from(app.arg),
             }),
-            Neut::Var(id) => Exp::Var(id),
+            Neut::Var(id) => Exp::from(id),
         }
+    }
+}
+
+impl<T: Into<Neut>> From<T> for Norm {
+    fn from(value: T) -> Self {
+        Norm::Neut(T::into(value))
+    }
+}
+
+impl From<Level> for Norm {
+    fn from(value: Level) -> Self {
+        Norm::Univ(value)
+    }
+}
+
+impl From<Pi<Norm>> for Norm {
+    fn from(value: Pi<Norm>) -> Self {
+        Norm::Pi(Box::new(value))
+    }
+}
+
+impl From<Fun<Norm>> for Norm {
+    fn from(value: Fun<Norm>) -> Self {
+        Norm::Fun(Box::new(value))
+    }
+}
+
+impl From<Absurd<Norm, Neut>> for Neut {
+    fn from(value: Absurd<Norm, Neut>) -> Self {
+        Neut::Absurd(Box::new(value))
+    }
+}
+
+impl From<App<Norm, Neut>> for Neut {
+    fn from(value: App<Norm, Neut>) -> Self {
+        Neut::App(Box::new(value))
+    }
+}
+
+impl From<Ident> for Neut {
+    fn from(value: Ident) -> Self {
+        Neut::Var(value)
     }
 }

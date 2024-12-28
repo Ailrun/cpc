@@ -18,12 +18,12 @@ fn example_nbe0() {
 fn example_nbe1() {
     let exp = assert_ok!(parser::full_expression("(fun (a : Pi (qwe : Univ@1) . Univ@1) -> a) (lambda (b : Univ@1) -> b)"));
     let typ = assert_ok!(parser::full_expression("Pi (d : Univ@1) . Univ@1"));
-    let result = EN::fun(Fun {
+    let result = EN::from(Fun {
         param: TypedName {
             name: String::from("d"),
-            typ: EN::Univ(1),
+            typ: EN::from(1),
         },
-        body: EN::var(String::from("d")),
+        body: EN::from(String::from("d")),
     });
     assert_eq!(exp.nbe(typ, &HashMap::new()), result);
 }

@@ -61,7 +61,7 @@ fn pi_expression(input: CpcInput) -> CpcResult<Exp> {
     let pi_binder = alt((keyword("forall"), keyword("Pi"), keyword("∀"), keyword("Π")));
     let pi_separator = symbol(".");
     binder_expression(pi_binder, pi_separator, |param, ret_typ| {
-        Exp::pi(Pi { param, ret_typ })
+        Exp::from(Pi { param, ret_typ })
     })
     .parse(input)
 }
@@ -70,7 +70,7 @@ fn lambda_expression(input: CpcInput) -> CpcResult<Exp> {
     let lambda_binder = alt((keyword("fun"), keyword("lambda"), keyword("λ")));
     let lambda_separator = symbol("->");
     binder_expression(lambda_binder, lambda_separator, |param, body| {
-        Exp::fun(Fun { param, body })
+        Exp::from(Fun { param, body })
     })
     .parse(input)
 }
@@ -83,7 +83,7 @@ fn absurd_expression(input: CpcInput) -> CpcResult<Exp> {
         parened(separated_pair(identifier, symbol("."), expression)),
     ))
     .map(|(_, scr, _, (motive_param, motive_body))| {
-        Exp::absurd(Absurd {
+        Exp::from(Absurd {
             scr,
             motive_param,
             motive_body,
@@ -95,18 +95,18 @@ fn absurd_expression(input: CpcInput) -> CpcResult<Exp> {
 fn applicative_expression(input: CpcInput) -> CpcResult<Exp> {
     let (input, fun) = atomic_expression.parse(input)?;
     let mut it = iterator(input, atomic_expression);
-    let res = it.fold(fun, |fun, arg| Exp::app(App { fun, arg }));
+    let res = it.fold(fun, |fun, arg| Exp::from(App { fun, arg }));
 
     it.finish().map(|(input, _)| (input, res))
 }
 
 fn atomic_expression(input: CpcInput) -> CpcResult<Exp> {
     let univ_expression =
-        separated_pair(keyword("Univ"), symbol("@"), level).map(|(_, lvl)| Exp::Univ(lvl));
+        separated_pair(keyword("Univ"), symbol("@"), level).map(|(_, lvl)| Exp::from(lvl));
     alt((
         value(Exp::Bottom, alt((keyword("Bottom"), symbol("⊥")))),
         univ_expression,
-        identifier.map(Exp::Var),
+        identifier.map(Exp::from),
         parened(expression),
     ))
     .parse(input)

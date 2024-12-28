@@ -7,7 +7,7 @@ use Exp as E;
 #[test]
 fn example_expression_parsing0() {
     let exp_string = "Pi (qwe : Univ@1) . Univ@1";
-    let exp = E::pi(Pi {
+    let exp = E::from(Pi {
         param: TypedName {
             name: String::from("qwe"),
             typ: E::Univ(1),
@@ -21,11 +21,11 @@ fn example_expression_parsing0() {
 #[test]
 fn example_expression_parsing1() {
     let exp_string = "(fun (a: Pi (qwe : Univ@1) . Univ@1) -> a) (lambda (b : Univ@1) -> b)";
-    let exp = E::app(App {
-        fun: E::fun(Fun {
+    let exp = E::from(App {
+        fun: E::from(Fun {
             param: TypedName {
                 name: String::from("a"),
-                typ: E::pi(Pi {
+                typ: E::from(Pi {
                     param: TypedName {
                         name: String::from("qwe"),
                         typ: E::Univ(1),
@@ -35,7 +35,7 @@ fn example_expression_parsing1() {
             },
             body: E::Var(String::from("a")),
         }),
-        arg: E::fun(Fun {
+        arg: E::from(Fun {
             param: TypedName {
                 name: String::from("b"),
                 typ: E::Univ(1),
