@@ -213,8 +213,8 @@
 
 <span class="kw">fn </span>subst_nbe_typ(param: TypedName&lt;Norm&gt;, body: Typ, arg: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; Norm {
     <span class="kw">let </span>param = TypedName::from(param);
-    E::app(App {
-        fun: E::fun(Fun { param, body }),
+    E::from(App {
+        fun: E::from(Fun { param, body }),
         arg,
     })
     .nbe_typ(ctx)
@@ -222,8 +222,8 @@
 
 <span class="kw">pub fn </span>infer(exp: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;Norm, TypeCheckError&gt; {
     <span class="kw">let </span>typ = <span class="kw">match </span>exp {
-        E::Univ(lvl) =&gt; EN::Univ(lvl + <span class="number">1</span>),
-        E::Bottom =&gt; EN::Univ(<span class="number">0</span>),
+        E::Univ(lvl) =&gt; EN::from(lvl + <span class="number">1</span>),
+        E::Bottom =&gt; EN::from(<span class="number">0</span>),
         E::Absurd(absurd) =&gt; {
             check(absurd.scr.clone(), EN::Bottom, ctx)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>newctx = ctx.clone();
@@ -244,14 +244,14 @@
             <span class="kw">let </span><span class="kw-2">mut </span>newctx = ctx.clone();
             newctx.insert(pi.param.name.clone(), pi.param.typ.clone().nbe_typ(ctx));
             <span class="kw">let </span>ret_lvl = infer_typ_lvl(pi.ret_typ, <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
-            EN::Univ(param_lvl.max(ret_lvl))
+            EN::from(param_lvl.max(ret_lvl))
         }
         E::Fun(fun) =&gt; {
             infer_typ_lvl(fun.param.typ.clone(), <span class="kw-2">&amp;</span>ctx)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>newctx = ctx.clone();
             newctx.insert(fun.param.name.clone(), fun.param.typ.clone().nbe_typ(ctx));
             <span class="kw">let </span>ret_typ = infer(fun.body, <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
-            EN::pi(Pi {
+            EN::from(Pi {
                 param: TypedName {
                     name: fun.param.name,
                     typ: fun.param.typ.nbe_typ(ctx),

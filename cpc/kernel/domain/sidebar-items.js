@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Dom","DomNeut","DomNorm"],"struct":["AbsurdDom","AppDom","FunDom","PiDom"],"type":["Env"]};
+window.SIDEBAR_ITEMS = {"enum":["Dom","DomNeut"],"struct":["AbsurdDom","AppDom","DomNorm","FunDom","PiDom"],"type":["Env"]};

@@ -105,7 +105,21 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Semantic Domain For Evaluation
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Semantic Domain For Evaluation
 //!
 //! The domain ([Dom]) in this module is used to evaluate [Exp].
 //! Each [Dom] value corresponds to a β-normal form of [Exp],
@@ -135,8 +149,9 @@
 }
 
 <span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub enum </span>DomNorm {
-    Ann(Dom, Dom),
+</span><span class="kw">pub struct </span>DomNorm {
+    <span class="kw">pub </span>typ: Dom,
+    <span class="kw">pub </span>dom: Dom,
 }
 
 <span class="attr">#[derive(Clone, Debug)]
@@ -168,48 +183,61 @@
     <span class="kw">pub </span>arg: DomNorm,
 }
 
-<span class="doccomment">/// Helper functions for easier `Dom` construction
-</span><span class="kw">impl </span>Dom {
-    <span class="kw">pub fn </span>absurd(typ: Dom, absurd_dom: AbsurdDom) -&gt; <span class="self">Self </span>{
-        Dom::Neut(Box::new(typ), DomNeut::absurd(absurd_dom))
-    }
+<span class="comment">////////////////////////////////////////////////////////////
+// Conversions
+////////////////////////////////////////////////////////////
 
-    <span class="kw">pub fn </span>pi(pi_dom: PiDom) -&gt; <span class="self">Self </span>{
-        Dom::Pi(Box::new(pi_dom))
-    }
-
-    <span class="kw">pub fn </span>fun(fun_dom: FunDom) -&gt; <span class="self">Self </span>{
-        Dom::Fun(Box::new(fun_dom))
-    }
-
-    <span class="kw">pub fn </span>app(typ: Dom, app_dom: AppDom) -&gt; <span class="self">Self </span>{
-        Dom::Neut(Box::new(typ), DomNeut::app(app_dom))
-    }
-
-    <span class="kw">pub fn </span>var(typ: Dom, id: Ident) -&gt; <span class="self">Self </span>{
-        Dom::Neut(Box::new(typ), DomNeut::Var(id))
+</span><span class="kw">impl </span>From&lt;Level&gt; <span class="kw">for </span>Dom {
+    <span class="kw">fn </span>from(value: Level) -&gt; <span class="self">Self </span>{
+        Dom::Univ(value)
     }
 }
 
-<span class="doccomment">/// Helper functions for easier `Dom` destruction
-</span><span class="kw">impl </span>Dom {
-    <span class="kw">pub fn </span>as_neut(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DomNeut, Dom&gt; {
-        <span class="kw">if let </span>Dom::Neut(<span class="kw">_</span>, dom) = <span class="self">self </span>{
+<span class="kw">impl </span>From&lt;PiDom&gt; <span class="kw">for </span>Dom {
+    <span class="kw">fn </span>from(value: PiDom) -&gt; <span class="self">Self </span>{
+        Dom::Pi(Box::new(value))
+    }
+}
+
+<span class="kw">impl </span>From&lt;FunDom&gt; <span class="kw">for </span>Dom {
+    <span class="kw">fn </span>from(value: FunDom) -&gt; <span class="self">Self </span>{
+        Dom::Fun(Box::new(value))
+    }
+}
+
+<span class="kw">impl</span>&lt;T: Into&lt;Box&lt;Dom&gt;&gt;, U: Into&lt;DomNeut&gt;&gt; From&lt;(T, U)&gt; <span class="kw">for </span>Dom {
+    <span class="kw">fn </span>from(value: (T, U)) -&gt; <span class="self">Self </span>{
+        Dom::Neut(T::into(value.<span class="number">0</span>), U::into(value.<span class="number">1</span>))
+    }
+}
+
+<span class="kw">impl </span>From&lt;AbsurdDom&gt; <span class="kw">for </span>DomNeut {
+    <span class="kw">fn </span>from(value: AbsurdDom) -&gt; <span class="self">Self </span>{
+        DomNeut::Absurd(Box::new(value))
+    }
+}
+
+<span class="kw">impl </span>From&lt;AppDom&gt; <span class="kw">for </span>DomNeut {
+    <span class="kw">fn </span>from(value: AppDom) -&gt; <span class="self">Self </span>{
+        DomNeut::App(Box::new(value))
+    }
+}
+
+<span class="kw">impl </span>From&lt;Ident&gt; <span class="kw">for </span>DomNeut {
+    <span class="kw">fn </span>from(value: Ident) -&gt; <span class="self">Self </span>{
+        DomNeut::Var(value)
+    }
+}
+
+<span class="kw">impl </span>TryFrom&lt;Dom&gt; <span class="kw">for </span>DomNeut {
+    <span class="kw">type </span>Error = Dom;
+
+    <span class="kw">fn </span>try_from(value: Dom) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">if let </span>Dom::Neut(<span class="kw">_</span>, dom) = value {
             <span class="prelude-val">Ok</span>(dom)
         } <span class="kw">else </span>{
-            <span class="prelude-val">Err</span>(<span class="self">self</span>)
+            <span class="prelude-val">Err</span>(value)
         }
-    }
-}
-
-<span class="doccomment">/// Helper functions for easier `DomNeut` construction
-</span><span class="kw">impl </span>DomNeut {
-    <span class="kw">pub fn </span>absurd(absurd_dom: AbsurdDom) -&gt; <span class="self">Self </span>{
-        DomNeut::Absurd(Box::new(absurd_dom))
-    }
-
-    <span class="kw">pub fn </span>app(app_dom: AppDom) -&gt; <span class="self">Self </span>{
-        DomNeut::App(Box::new(app_dom))
     }
 }
 </code></pre></div></section></main></body></html>

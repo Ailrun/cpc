@@ -277,10 +277,7 @@
 <a href="#276" id="276">276</a>
 <a href="#277" id="277">277</a>
 <a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a></pre></div><pre class="rust"><code><span class="attr">#![allow(rustdoc::private_intra_doc_links)]
+<a href="#279" id="279">279</a></pre></div><pre class="rust"><code><span class="attr">#![allow(rustdoc::private_intra_doc_links)]
 </span><span class="doccomment">//! # Normalization Module Based on Normalization-by-Evaluation (NbE)
 //!
 //! This module provides normalization methods (`nbe` and `nbe_typ`)
@@ -290,7 +287,7 @@
 //!
 //! Actual implementation lives in trait implementations of [Exp].
 //! Specifically, one can check its [nbe method](Exp::nbe) and [eval method](Exp::eval).
-</span><span class="kw">use </span>std::{collections::HashMap, convert::Infallible};
+</span><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use crate</span>::{kernel::domain::<span class="kw-2">*</span>, syntax::<span class="kw-2">*</span>};
 
@@ -302,26 +299,28 @@
 <span class="doccomment">/// ## Main Functions for Normalization-by-Evaluation
 </span><span class="kw">impl </span>Exp {
     <span class="kw">pub fn </span>nbe(<span class="self">self</span>, typ: <span class="self">Self</span>, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; Norm {
-        <span class="kw">let </span><span class="kw-2">mut </span>env = HashMap::new();
-        <span class="kw">let </span><span class="kw-2">mut </span>names = <span class="macro">vec!</span>[];
-        <span class="kw">for </span>(var, var_typ) <span class="kw">in </span>ctx.iter() {
-            <span class="kw">let </span>var_typ_dom = Exp::from(var_typ.clone()).eval(<span class="kw-2">&amp;</span>env);
-            env.insert(var.clone(), D::var(var_typ_dom, var.clone()));
-            names.push(var.clone());
+        <span class="kw">let </span>(env, ids) = Exp::build_initial(ctx);
+        DN {
+            typ: typ.eval(<span class="kw-2">&amp;</span>env),
+            dom: <span class="self">self</span>.eval(<span class="kw-2">&amp;</span>env),
         }
-        <span class="kw">let </span>typ_dom = typ.eval(<span class="kw-2">&amp;</span>env);
-        DN::Ann(typ_dom, <span class="self">self</span>.eval(<span class="kw-2">&amp;</span>env)).readback(<span class="kw-2">&amp;</span>names)
+        .readback(<span class="kw-2">&amp;</span>ids)
     }
 
     <span class="kw">pub fn </span>nbe_typ(<span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; Norm {
+        <span class="kw">let </span>(env, ids) = Exp::build_initial(ctx);
+        <span class="self">self</span>.eval(<span class="kw-2">&amp;</span>env).readback_typ(<span class="kw-2">&amp;</span>ids)
+    }
+
+    <span class="kw">fn </span>build_initial(ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; (Env, Idents) {
         <span class="kw">let </span><span class="kw-2">mut </span>env = HashMap::new();
-        <span class="kw">let </span><span class="kw-2">mut </span>names = <span class="macro">vec!</span>[];
+        <span class="kw">let </span><span class="kw-2">mut </span>ids = <span class="macro">vec!</span>[];
         <span class="kw">for </span>(var, var_typ) <span class="kw">in </span>ctx.iter() {
             <span class="kw">let </span>var_typ_dom = Exp::from(var_typ.clone()).eval(<span class="kw-2">&amp;</span>env);
-            env.insert(var.clone(), D::var(var_typ_dom, var.clone()));
-            names.push(var.clone());
+            env.insert(var.clone(), D::from((var_typ_dom, var.clone())));
+            ids.push(var.clone());
         }
-        <span class="self">self</span>.eval(<span class="kw-2">&amp;</span>env).readback_typ(<span class="kw-2">&amp;</span>names)
+        (env, ids)
     }
 }
 
@@ -329,7 +328,7 @@
 </span><span class="kw">impl </span>Exp {
     <span class="kw">fn </span>eval(<span class="self">self</span>, env: <span class="kw-2">&amp;</span>Env) -&gt; D {
         <span class="kw">match </span><span class="self">self </span>{
-            E::Univ(lvl) =&gt; D::Univ(lvl),
+            E::Univ(lvl) =&gt; D::from(lvl),
             E::Bottom =&gt; D::Bottom,
             E::Absurd(absurd_exp) =&gt; <span class="kw">match </span>absurd_exp.scr.eval(env) {
                 D::Neut(scr_typ, scr) =&gt; {
@@ -337,9 +336,9 @@
                     <span class="kw">let </span>motive_body_env = env.clone();
                     <span class="kw">let </span>motive_body_exp = absurd_exp.motive_body;
                     <span class="kw">let </span><span class="kw-2">mut </span>dom_typ_env = motive_body_env.clone();
-                    dom_typ_env.insert(motive_param.clone(), D::Neut(scr_typ, scr.clone()));
+                    dom_typ_env.insert(motive_param.clone(), D::from((scr_typ, scr.clone())));
                     <span class="kw">let </span>dom_typ = motive_body_exp.clone().eval(<span class="kw-2">&amp;</span>dom_typ_env);
-                    D::absurd(
+                    D::from((
                         dom_typ,
                         AbsurdDom {
                             scr,
@@ -347,16 +346,16 @@
                             motive_body_env,
                             motive_body_exp,
                         },
-                    )
+                    ))
                 }
-                scr =&gt; into_bang(inconsistent_panic(scr)),
+                scr =&gt; inconsistent_panic(scr),
             },
             E::Pi(pi_exp) =&gt; {
                 <span class="kw">let </span>param = pi_exp.param.name;
                 <span class="kw">let </span>param_typ = pi_exp.param.typ.eval(env);
                 <span class="kw">let </span>ret_typ_env = env.clone();
                 <span class="kw">let </span>ret_typ_exp = pi_exp.ret_typ;
-                D::pi(PiDom {
+                D::from(PiDom {
                     param,
                     param_typ,
                     ret_typ_env,
@@ -367,7 +366,7 @@
                 <span class="kw">let </span>param = fun_exp.param.name;
                 <span class="kw">let </span>body_env = env.clone();
                 <span class="kw">let </span>body_exp = fun_exp.body;
-                D::fun(FunDom {
+                D::from(FunDom {
                     param,
                     body_env,
                     body_exp,
@@ -399,25 +398,30 @@
             };
             <span class="kw">let </span><span class="kw-2">mut </span>new_env = pi_dom.ret_typ_env;
             new_env.insert(pi_dom.param, arg.clone());
-            <span class="kw">let </span>arg = DN::Ann(pi_dom.param_typ, arg);
-            D::app(pi_dom.ret_typ_exp.eval(<span class="kw-2">&amp;</span>new_env), AppDom { fun, arg })
+            <span class="kw">let </span>arg = DN {
+                typ: pi_dom.param_typ,
+                dom: arg,
+            };
+            D::from((pi_dom.ret_typ_exp.eval(<span class="kw-2">&amp;</span>new_env), AppDom { fun, arg }))
         }
         <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Invalid function {:?}"</span>, fun),
     }
 }
 
-<span class="doccomment">/// ## Readback from Domain
+<span class="kw">type </span>Idents = Vec&lt;Ident&gt;;
+
+<span class="doccomment">/// ## Readback from Domain Types ([DomNorm] and [DomNeut])
 </span><span class="kw">trait </span>Readback {
     <span class="kw">type </span>NormalizedSyntax;
 
-    <span class="kw">fn </span>readback(<span class="self">self</span>, names: <span class="kw-2">&amp;</span>Vec&lt;Ident&gt;) -&gt; <span class="self">Self</span>::NormalizedSyntax;
+    <span class="kw">fn </span>readback(<span class="self">self</span>, ids: <span class="kw-2">&amp;</span>Idents) -&gt; <span class="self">Self</span>::NormalizedSyntax;
 }
 
 <span class="kw">impl </span>Dom {
     <span class="doccomment">/// Special Readback from Domain as a Type
-    </span><span class="kw">fn </span>readback_typ(<span class="self">self</span>, names: <span class="kw-2">&amp;</span>Vec&lt;Ident&gt;) -&gt; Norm {
+    </span><span class="kw">fn </span>readback_typ(<span class="self">self</span>, ids: <span class="kw-2">&amp;</span>Idents) -&gt; Norm {
         <span class="kw">match </span><span class="self">self </span>{
-            D::Univ(lvl) =&gt; Norm::Univ(lvl),
+            D::Univ(lvl) =&gt; Norm::from(lvl),
             D::Bottom =&gt; Norm::Bottom,
             D::Pi(pi_dom) =&gt; {
                 <span class="kw">let </span>PiDom {
@@ -428,34 +432,31 @@
                 } = <span class="kw-2">*</span>pi_dom;
                 <span class="kw">let </span>param = TypedName {
                     name: param_name.clone(),
-                    typ: param_typ.clone().readback_typ(names),
+                    typ: param_typ.clone().readback_typ(ids),
                 };
-                ret_typ_env.insert(param_name.clone(), D::var(param_typ, param_name.clone()));
-                <span class="kw">let </span><span class="kw-2">mut </span>ret_typ_names = names.clone();
-                ret_typ_names.push(param_name);
-                <span class="kw">let </span>ret_typ = ret_typ_exp.eval(<span class="kw-2">&amp;</span>ret_typ_env).readback_typ(<span class="kw-2">&amp;</span>ret_typ_names);
-                Norm::pi(Pi { param, ret_typ })
+                ret_typ_env.insert(param_name.clone(), D::from((param_typ, param_name.clone())));
+                <span class="kw">let </span><span class="kw-2">mut </span>ret_typ_ids = ids.clone();
+                ret_typ_ids.push(param_name);
+                <span class="kw">let </span>ret_typ = ret_typ_exp.eval(<span class="kw-2">&amp;</span>ret_typ_env).readback_typ(<span class="kw-2">&amp;</span>ret_typ_ids);
+                Norm::from(Pi { param, ret_typ })
             }
-            D::Neut(_typ, neut) =&gt; Norm::Neut(neut.readback(names)),
-            <span class="kw">_ </span>=&gt; into_bang(non_type_exp_panic(<span class="self">self</span>)),
+            D::Neut(_typ, neut) =&gt; Norm::from(neut.readback(ids)),
+            <span class="kw">_ </span>=&gt; non_type_exp_panic(<span class="self">self</span>),
         }
     }
 
     <span class="doccomment">/// Helper Readback for a Neutral Domain Value
-    </span><span class="kw">fn </span>readback_as_neut&lt;T&gt;(<span class="self">self</span>, names: <span class="kw-2">&amp;</span>Vec&lt;Ident&gt;, err: T) -&gt; Neut
-    <span class="kw">where
-        </span>T: FnOnce(<span class="self">Self</span>) -&gt; Infallible,
-    {
-        <span class="self">self</span>.as_neut()
-            .unwrap_or_else(|x| into_bang(err(x)))
-            .readback(names)
+    </span><span class="kw">fn </span>readback_as_neut(<span class="self">self</span>, ids: <span class="kw-2">&amp;</span>Idents, err: <span class="kw">fn</span>(<span class="self">Self</span>) -&gt; !) -&gt; Neut {
+        DomNeut::try_from(<span class="self">self</span>)
+            .unwrap_or_else(|x| err(x))
+            .readback(ids)
     }
 }
 
 <span class="kw">impl </span>Readback <span class="kw">for </span>DomNeut {
     <span class="kw">type </span>NormalizedSyntax = Neut;
 
-    <span class="kw">fn </span>readback(<span class="self">self</span>, names: <span class="kw-2">&amp;</span>Vec&lt;Ident&gt;) -&gt; Neut {
+    <span class="kw">fn </span>readback(<span class="self">self</span>, ids: <span class="kw-2">&amp;</span>Idents) -&gt; Neut {
         <span class="kw">match </span><span class="self">self </span>{
             DR::Absurd(absurd_dom) =&gt; {
                 <span class="kw">let </span>AbsurdDom {
@@ -464,28 +465,28 @@
                     <span class="kw-2">mut </span>motive_body_env,
                     motive_body_exp,
                 } = <span class="kw-2">*</span>absurd_dom;
-                <span class="kw">let </span>scr = scr.readback(names);
+                <span class="kw">let </span>scr = scr.readback(ids);
                 motive_body_env.insert(
                     motive_param.clone(),
-                    D::var(D::Bottom, motive_param.clone()),
+                    D::from((D::Bottom, motive_param.clone())),
                 );
-                <span class="kw">let </span><span class="kw-2">mut </span>motive_body_names = names.clone();
-                motive_body_names.push(motive_param.clone());
+                <span class="kw">let </span><span class="kw-2">mut </span>motive_body_ids = ids.clone();
+                motive_body_ids.push(motive_param.clone());
                 <span class="kw">let </span>motive_body = motive_body_exp
                     .eval(<span class="kw-2">&amp;</span>motive_body_env)
-                    .readback_typ(<span class="kw-2">&amp;</span>motive_body_names);
-                Neut::absurd(Absurd {
+                    .readback_typ(<span class="kw-2">&amp;</span>motive_body_ids);
+                Neut::from(Absurd {
                     scr,
                     motive_param,
                     motive_body,
                 })
             }
             DR::App(app_dom) =&gt; {
-                <span class="kw">let </span>fun = app_dom.fun.readback(names);
-                <span class="kw">let </span>arg = app_dom.arg.readback(names);
-                Neut::app(App { fun, arg })
+                <span class="kw">let </span>fun = app_dom.fun.readback(ids);
+                <span class="kw">let </span>arg = app_dom.arg.readback(ids);
+                Neut::from(App { fun, arg })
             }
-            DR::Var(id) =&gt; Neut::Var(id),
+            DR::Var(id) =&gt; Neut::from(id),
         }
     }
 }
@@ -493,11 +494,11 @@
 <span class="kw">impl </span>Readback <span class="kw">for </span>DomNorm {
     <span class="kw">type </span>NormalizedSyntax = Norm;
 
-    <span class="kw">fn </span>readback(<span class="self">self</span>, names: <span class="kw-2">&amp;</span>Vec&lt;Ident&gt;) -&gt; Norm {
-        <span class="kw">let </span>DN::Ann(typ, dom) = <span class="self">self</span>;
+    <span class="kw">fn </span>readback(<span class="self">self</span>, ids: <span class="kw-2">&amp;</span>Idents) -&gt; Norm {
+        <span class="kw">let </span>DN { typ, dom } = <span class="self">self</span>;
         <span class="kw">match </span>typ {
-            D::Univ(<span class="kw">_</span>) =&gt; dom.readback_typ(names),
-            D::Bottom =&gt; Norm::Neut(dom.readback_as_neut(names, inconsistent_panic)),
+            D::Univ(<span class="kw">_</span>) =&gt; dom.readback_typ(ids),
+            D::Bottom =&gt; Norm::from(dom.readback_as_neut(ids, inconsistent_panic)),
             D::Pi(pi_dom) =&gt; {
                 <span class="kw">let </span>PiDom {
                     param: param_name,
@@ -507,19 +508,22 @@
                 } = <span class="kw-2">*</span>pi_dom;
                 <span class="kw">let </span>param = TypedName {
                     name: param_name.clone(),
-                    typ: param_typ.clone().readback_typ(names),
+                    typ: param_typ.clone().readback_typ(ids),
                 };
-                <span class="kw">let </span>param_itself = D::var(param_typ, param_name.clone());
+                <span class="kw">let </span>param_itself = D::from((param_typ, param_name.clone()));
                 ret_typ_env.insert(param_name.clone(), param_itself.clone());
-                <span class="kw">let </span><span class="kw-2">mut </span>ret_typ_names = names.clone();
-                ret_typ_names.push(param_name);
+                <span class="kw">let </span><span class="kw-2">mut </span>ret_typ_ids = ids.clone();
+                ret_typ_ids.push(param_name);
                 <span class="kw">let </span>ret_typ_dom = ret_typ_exp.eval(<span class="kw-2">&amp;</span>ret_typ_env);
-                <span class="kw">let </span>body =
-                    DN::Ann(ret_typ_dom, reduce_app(dom, param_itself)).readback(<span class="kw-2">&amp;</span>ret_typ_names);
-                Norm::fun(Fun { param, body })
+                <span class="kw">let </span>body = DN {
+                    typ: ret_typ_dom,
+                    dom: reduce_app(dom, param_itself),
+                }
+                .readback(<span class="kw-2">&amp;</span>ret_typ_ids);
+                Norm::from(Fun { param, body })
             }
-            D::Neut(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; Norm::Neut(dom.readback_as_neut(names, non_neutral_exp_panic)),
-            <span class="kw">_ </span>=&gt; into_bang(non_type_exp_panic(typ)),
+            D::Neut(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; Norm::from(dom.readback_as_neut(ids, non_neutral_exp_panic)),
+            <span class="kw">_ </span>=&gt; non_type_exp_panic(typ),
         }
     }
 }
@@ -532,14 +536,14 @@
 </span><span class="doccomment">/// Helper for Inconsistency Case
 ///
 /// TODO: Give panic codes
-</span><span class="kw">fn </span>inconsistent_panic(dom: Dom) -&gt; Infallible {
+</span><span class="kw">fn </span>inconsistent_panic(dom: Dom) -&gt; ! {
     <span class="macro">panic!</span>(<span class="string">"Inconsistent expression {:?} is found"</span>, dom)
 }
 
 <span class="doccomment">/// Helper for Non-neutral Expression Case when Expecting Neutral
 ///
 /// TODO: Give panic codes
-</span><span class="kw">fn </span>non_neutral_exp_panic(dom: Dom) -&gt; Infallible {
+</span><span class="kw">fn </span>non_neutral_exp_panic(dom: Dom) -&gt; ! {
     <span class="macro">panic!</span>(
         <span class="string">"Non-neutral expression {:?} cannot be readback under a neutral type"</span>,
         dom
@@ -549,17 +553,7 @@
 <span class="doccomment">/// Helper for Non-type Expression Case when Expecting Type
 ///
 /// TODO: Give panic codes
-</span><span class="kw">fn </span>non_type_exp_panic(dom: Dom) -&gt; Infallible {
+</span><span class="kw">fn </span>non_type_exp_panic(dom: Dom) -&gt; ! {
     <span class="macro">panic!</span>(<span class="string">"Expression {:?} is not a type"</span>, dom)
-}
-
-<span class="comment">////////////////////////////////////////////////////////////
-// Other Helpers
-////////////////////////////////////////////////////////////
-// TODO: Move to a common util module
-
-</span><span class="doccomment">/// [Infallible] into [!]
-</span><span class="kw">fn </span>into_bang(value: Infallible) -&gt; ! {
-    <span class="kw">match </span>value {}
 }
 </code></pre></div></section></main></body></html>

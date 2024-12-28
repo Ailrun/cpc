@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["inconsistent_panic","into_bang","non_neutral_exp_panic","non_type_exp_panic","reduce_app"],"trait":["Readback"]};
+window.SIDEBAR_ITEMS = {"fn":["inconsistent_panic","non_neutral_exp_panic","non_type_exp_panic","reduce_app"],"trait":["Readback"],"type":["Idents"]};
