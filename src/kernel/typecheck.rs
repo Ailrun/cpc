@@ -184,6 +184,10 @@ impl Neut {
                 self_app.fun.check_alpha_eq(other_app.fun, renaming)
                     && self_app.arg.check_alpha_eq(other_app.arg, renaming)
             }
+            // This case is wrong: What if `self_id` is not in `renaming`?
+            // This should use a safe method to check that and then decide
+            // whether directly compare `self_id` or its renamed version
+            // with `other_id`.
             (Neut::Var(self_id), Neut::Var(other_id)) => renaming[&self_id] == other_id,
             (_, _) => false,
         }
