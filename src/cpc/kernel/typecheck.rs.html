@@ -189,7 +189,11 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
 //!
 //! This module provides both type checking and inference functions
 //! based on NbE algorithm from [Module nbe](crate::kernel::nbe).
@@ -375,7 +379,11 @@
                 self_app.fun.check_alpha_eq(other_app.fun, renaming)
                     &amp;&amp; self_app.arg.check_alpha_eq(other_app.arg, renaming)
             }
-            (Neut::Var(self_id), Neut::Var(other_id)) =&gt; renaming[<span class="kw-2">&amp;</span>self_id] == other_id,
+            <span class="comment">// This case is wrong: What if `self_id` is not in `renaming`?
+            // This should use a safe method to check that and then decide
+            // whether directly compare `self_id` or its renamed version
+            // with `other_id`.
+            </span>(Neut::Var(self_id), Neut::Var(other_id)) =&gt; renaming[<span class="kw-2">&amp;</span>self_id] == other_id,
             (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
         }
     }
