@@ -7,7 +7,7 @@
 //! βη-normal form by η expanding it in the course.
 use std::collections::HashMap;
 
-use crate::syntax::*;
+use crate::front::syntax::*;
 
 pub type Env = HashMap<Ident, Dom>;
 

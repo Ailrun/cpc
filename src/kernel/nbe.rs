@@ -10,7 +10,7 @@
 //! Specifically, one can check its [nbe method](Exp::nbe) and [eval method](Exp::eval).
 use std::collections::HashMap;
 
-use crate::{kernel::domain::*, syntax::*};
+use crate::{front::syntax::*, kernel::domain::*};
 
 use Dom as D;
 use DomNeut as DR;

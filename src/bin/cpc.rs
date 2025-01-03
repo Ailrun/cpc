@@ -1,6 +1,6 @@
 use std::{collections::HashMap, io::*, process::exit};
 
-use cpc::{kernel::typecheck::*, parser, syntax::*};
+use cpc::{front::parser, front::syntax::*, kernel::typecheck::*};
 
 fn main() {
     let mut s = String::new();

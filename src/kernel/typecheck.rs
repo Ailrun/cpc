@@ -4,7 +4,7 @@
 //! based on NbE algorithm from [Module nbe](crate::kernel::nbe).
 use std::collections::HashMap;
 
-use crate::syntax::*;
+use crate::front::syntax::*;
 
 use Exp as E;
 use Norm as EN;

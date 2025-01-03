@@ -2,7 +2,7 @@ mod common;
 
 use std::collections::HashMap;
 
-use cpc::{syntax::*, parser};
+use cpc::front::{parser, syntax::*};
 
 use Norm as EN;
 
@@ -16,7 +16,9 @@ fn example_nbe0() {
 
 #[test]
 fn example_nbe1() {
-    let exp = assert_ok!(parser::full_expression("(fun (a : Pi (qwe : Univ@1) . Univ@1) -> a) (lambda (b : Univ@1) -> b)"));
+    let exp = assert_ok!(parser::full_expression(
+        "(fun (a : Pi (qwe : Univ@1) . Univ@1) -> a) (lambda (b : Univ@1) -> b)"
+    ));
     let typ = assert_ok!(parser::full_expression("Pi (d : Univ@1) . Univ@1"));
     let result = EN::from(Fun {
         param: TypedName {

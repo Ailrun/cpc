@@ -1,6 +1,6 @@
 mod common;
 
-use cpc::{syntax::*, parser};
+use cpc::front::{parser, syntax::*};
 
 use Exp as E;
 
