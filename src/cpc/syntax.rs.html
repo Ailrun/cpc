@@ -213,44 +213,7 @@
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
-<a href="#238" id="238">238</a>
-<a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
-<a href="#243" id="243">243</a>
-<a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Abstract Syntax Tree (AST) of CPC
+<a href="#215" id="215">215</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Abstract Syntax Tree (AST) of CPC
 
 </span><span class="kw">use </span>std::collections::HashMap;
 
@@ -298,30 +261,6 @@
 /// In a dependently-typed world, expression can also be a type.
 </span><span class="kw">pub type </span>Typ = Exp;
 
-<span class="doccomment">/// Context
-</span><span class="kw">pub type </span>Ctx = HashMap&lt;Ident, Norm&gt;;
-
-<span class="doccomment">/// # AST for Normal Expression
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
-</span><span class="kw">pub enum </span>Norm {
-    Univ(Level),
-    <span class="comment">// Data(Ident),
-    // Con(Ident),
-    </span>Bottom,
-    Pi(Box&lt;Pi&lt;<span class="self">Self</span>&gt;&gt;),
-    Fun(Box&lt;Fun&lt;<span class="self">Self</span>&gt;&gt;),
-    Neut(Neut),
-}
-
-<span class="doccomment">/// # AST for Neutral Expression
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
-</span><span class="kw">pub enum </span>Neut {
-    <span class="comment">// Rec(Ident),
-    </span>Absurd(Box&lt;Absurd&lt;Norm, <span class="self">Self</span>&gt;&gt;),
-    App(Box&lt;App&lt;Norm, <span class="self">Self</span>&gt;&gt;),
-    Var(Ident),
-}
-
 <span class="doccomment">/// # Absurd case
 ///
 /// Type parameter `N` represents **N**ormal subcase, and `R`
@@ -367,75 +306,104 @@
     <span class="kw">pub </span>arg: N,
 }
 
-<span class="doccomment">/// ## Ad-hoc simulation of [From] for generic [TypedName]
-///
-/// This simulates `From&lt;TypedName&lt;U&gt;&gt;` for `TypedName&lt;T&gt;`
-/// where `T: From&lt;U&gt;`. However, this cannot be implemented
-/// as a trait implementation as such an implementation will
-/// conflict with `impl&lt;T&gt; From&lt;T&gt; for T` (the blanket reflexive
-/// implementation). Because of that reflexive impl itself,
-/// `From&lt;TypedName&lt;T&gt;&gt;` for `TypedName&lt;T&gt;` is both an instance
-/// of the simulated implementation and the blanket reflexive
-/// implementation, and Rust cannot pick one.
-</span><span class="kw">impl</span>&lt;T&gt; TypedName&lt;T&gt; {
-    <span class="kw">pub fn </span>from&lt;U: Into&lt;T&gt;&gt;(value: TypedName&lt;U&gt;) -&gt; <span class="self">Self </span>{
+<span class="doccomment">/// ## Helper functions for easier [Exp] construction
+</span><span class="kw">impl </span>Exp {
+    <span class="kw">pub fn </span>absurd(absurd_exp: Absurd&lt;<span class="self">Self</span>, <span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        Exp::Absurd(Box::new(absurd_exp))
+    }
+
+    <span class="kw">pub fn </span>pi(pi_exp: Pi&lt;<span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        Exp::Pi(Box::new(pi_exp))
+    }
+
+    <span class="kw">pub fn </span>fun(fun_exp: Fun&lt;<span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        Exp::Fun(Box::new(fun_exp))
+    }
+
+    <span class="kw">pub fn </span>app(app_exp: App&lt;<span class="self">Self</span>, <span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        Exp::App(Box::new(app_exp))
+    }
+}
+
+<span class="kw">pub type </span>Ctx = HashMap&lt;Ident, Norm&gt;;
+
+<span class="doccomment">/// # AST for Normal Expression
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>Norm {
+    Univ(Level),
+    <span class="comment">// Data(Ident),
+    // Con(Ident),
+    </span>Bottom,
+    Pi(Box&lt;Pi&lt;<span class="self">Self</span>&gt;&gt;),
+    Fun(Box&lt;Fun&lt;<span class="self">Self</span>&gt;&gt;),
+    Neut(Neut),
+}
+
+<span class="doccomment">/// # AST for Neutral Expression
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>Neut {
+    <span class="comment">// Rec(Ident),
+    </span>Absurd(Box&lt;Absurd&lt;Norm, <span class="self">Self</span>&gt;&gt;),
+    App(Box&lt;App&lt;Norm, <span class="self">Self</span>&gt;&gt;),
+    Var(Ident),
+}
+
+<span class="doccomment">/// ## Helper functions for easier [Norm] construction
+</span><span class="kw">impl </span>Norm {
+    <span class="kw">pub fn </span>absurd(absurd_exp: Absurd&lt;<span class="self">Self</span>, Neut&gt;) -&gt; <span class="self">Self </span>{
+        Norm::Neut(Neut::absurd(absurd_exp))
+    }
+
+    <span class="kw">pub fn </span>pi(pi_exp: Pi&lt;<span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        Norm::Pi(Box::new(pi_exp))
+    }
+
+    <span class="kw">pub fn </span>fun(fun_exp: Fun&lt;<span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        Norm::Fun(Box::new(fun_exp))
+    }
+
+    <span class="kw">pub fn </span>app(app_exp: App&lt;<span class="self">Self</span>, Neut&gt;) -&gt; <span class="self">Self </span>{
+        Norm::Neut(Neut::app(app_exp))
+    }
+
+    <span class="kw">pub fn </span>var(id: Ident) -&gt; <span class="self">Self </span>{
+        Norm::Neut(Neut::Var(id))
+    }
+}
+
+<span class="doccomment">/// ## Helper functions for easier [Neut] construction
+</span><span class="kw">impl </span>Neut {
+    <span class="kw">pub fn </span>absurd(absurd_exp: Absurd&lt;Norm, <span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        Neut::Absurd(Box::new(absurd_exp))
+    }
+
+    <span class="kw">pub fn </span>app(app_exp: App&lt;Norm, <span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        Neut::App(Box::new(app_exp))
+    }
+}
+
+<span class="kw">impl</span>&lt;T&gt; TypedName&lt;T&gt; {
+    <span class="kw">pub fn </span>from&lt;U&gt;(value: TypedName&lt;U&gt;) -&gt; <span class="self">Self
+    </span><span class="kw">where
+        </span>T: From&lt;U&gt;,
+    {
         TypedName {
             name: value.name,
-            typ: Into::into(value.typ),
+            typ: From::from(value.typ),
         }
-    }
-}
-
-<span class="comment">////////////////////////////////////////////////////////////
-// Conversions
-////////////////////////////////////////////////////////////
-
-</span><span class="kw">impl </span>From&lt;Level&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: Level) -&gt; <span class="self">Self </span>{
-        Exp::Univ(value)
-    }
-}
-
-<span class="kw">impl </span>From&lt;Absurd&lt;Exp, Exp&gt;&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: Absurd&lt;Exp, Exp&gt;) -&gt; <span class="self">Self </span>{
-        Exp::Absurd(Box::new(value))
-    }
-}
-
-<span class="kw">impl </span>From&lt;Pi&lt;Exp&gt;&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: Pi&lt;Exp&gt;) -&gt; <span class="self">Self </span>{
-        Exp::Pi(Box::new(value))
-    }
-}
-
-<span class="kw">impl </span>From&lt;Fun&lt;Exp&gt;&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: Fun&lt;Exp&gt;) -&gt; <span class="self">Self </span>{
-        Exp::Fun(Box::new(value))
-    }
-}
-
-<span class="kw">impl </span>From&lt;App&lt;Exp, Exp&gt;&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: App&lt;Exp, Exp&gt;) -&gt; <span class="self">Self </span>{
-        Exp::App(Box::new(value))
-    }
-}
-
-<span class="kw">impl </span>From&lt;Ident&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: Ident) -&gt; <span class="self">Self </span>{
-        Exp::Var(value)
     }
 }
 
 <span class="kw">impl </span>From&lt;Norm&gt; <span class="kw">for </span>Exp {
     <span class="kw">fn </span>from(value: Norm) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>value {
-            Norm::Univ(lvl) =&gt; Exp::from(lvl),
+            Norm::Univ(lvl) =&gt; Exp::Univ(lvl),
             Norm::Bottom =&gt; Exp::Bottom,
-            Norm::Pi(pi) =&gt; Exp::from(Pi {
+            Norm::Pi(pi) =&gt; Exp::pi(Pi {
                 param: TypedName::from(pi.param),
                 ret_typ: From::from(pi.ret_typ),
             }),
-            Norm::Fun(fun) =&gt; Exp::from(Fun {
+            Norm::Fun(fun) =&gt; Exp::fun(Fun {
                 param: TypedName::from(fun.param),
                 body: From::from(fun.body),
             }),
@@ -447,59 +415,17 @@
 <span class="kw">impl </span>From&lt;Neut&gt; <span class="kw">for </span>Exp {
     <span class="kw">fn </span>from(value: Neut) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>value {
-            Neut::Absurd(absurd) =&gt; Exp::from(Absurd {
+            Neut::Absurd(absurd) =&gt; Exp::absurd(Absurd {
                 scr: From::from(absurd.scr),
                 motive_param: absurd.motive_param,
                 motive_body: From::from(absurd.motive_body),
             }),
-            Neut::App(app) =&gt; Exp::from(App {
+            Neut::App(app) =&gt; Exp::app(App {
                 fun: From::from(app.fun),
                 arg: From::from(app.arg),
             }),
-            Neut::Var(id) =&gt; Exp::from(id),
+            Neut::Var(id) =&gt; Exp::Var(id),
         }
-    }
-}
-
-<span class="kw">impl</span>&lt;T: Into&lt;Neut&gt;&gt; From&lt;T&gt; <span class="kw">for </span>Norm {
-    <span class="kw">fn </span>from(value: T) -&gt; <span class="self">Self </span>{
-        Norm::Neut(T::into(value))
-    }
-}
-
-<span class="kw">impl </span>From&lt;Level&gt; <span class="kw">for </span>Norm {
-    <span class="kw">fn </span>from(value: Level) -&gt; <span class="self">Self </span>{
-        Norm::Univ(value)
-    }
-}
-
-<span class="kw">impl </span>From&lt;Pi&lt;Norm&gt;&gt; <span class="kw">for </span>Norm {
-    <span class="kw">fn </span>from(value: Pi&lt;Norm&gt;) -&gt; <span class="self">Self </span>{
-        Norm::Pi(Box::new(value))
-    }
-}
-
-<span class="kw">impl </span>From&lt;Fun&lt;Norm&gt;&gt; <span class="kw">for </span>Norm {
-    <span class="kw">fn </span>from(value: Fun&lt;Norm&gt;) -&gt; <span class="self">Self </span>{
-        Norm::Fun(Box::new(value))
-    }
-}
-
-<span class="kw">impl </span>From&lt;Absurd&lt;Norm, Neut&gt;&gt; <span class="kw">for </span>Neut {
-    <span class="kw">fn </span>from(value: Absurd&lt;Norm, Neut&gt;) -&gt; <span class="self">Self </span>{
-        Neut::Absurd(Box::new(value))
-    }
-}
-
-<span class="kw">impl </span>From&lt;App&lt;Norm, Neut&gt;&gt; <span class="kw">for </span>Neut {
-    <span class="kw">fn </span>from(value: App&lt;Norm, Neut&gt;) -&gt; <span class="self">Self </span>{
-        Neut::App(Box::new(value))
-    }
-}
-
-<span class="kw">impl </span>From&lt;Ident&gt; <span class="kw">for </span>Neut {
-    <span class="kw">fn </span>from(value: Ident) -&gt; <span class="self">Self </span>{
-        Neut::Var(value)
     }
 }
 </code></pre></div></section></main></body></html>

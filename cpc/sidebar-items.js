@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["kernel","parser","syntax"]};
+window.SIDEBAR_ITEMS = {"mod":["front","kernel"]};

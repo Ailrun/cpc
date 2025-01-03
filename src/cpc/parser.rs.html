@@ -279,7 +279,7 @@
     <span class="kw">let </span>pi_binder = alt((keyword(<span class="string">"forall"</span>), keyword(<span class="string">"Pi"</span>), keyword(<span class="string">"∀"</span>), keyword(<span class="string">"Π"</span>)));
     <span class="kw">let </span>pi_separator = symbol(<span class="string">"."</span>);
     binder_expression(pi_binder, pi_separator, |param, ret_typ| {
-        Exp::from(Pi { param, ret_typ })
+        Exp::pi(Pi { param, ret_typ })
     })
     .parse(input)
 }
@@ -288,7 +288,7 @@
     <span class="kw">let </span>lambda_binder = alt((keyword(<span class="string">"fun"</span>), keyword(<span class="string">"lambda"</span>), keyword(<span class="string">"λ"</span>)));
     <span class="kw">let </span>lambda_separator = symbol(<span class="string">"-&gt;"</span>);
     binder_expression(lambda_binder, lambda_separator, |param, body| {
-        Exp::from(Fun { param, body })
+        Exp::fun(Fun { param, body })
     })
     .parse(input)
 }
@@ -301,7 +301,7 @@
         parened(separated_pair(identifier, symbol(<span class="string">"."</span>), expression)),
     ))
     .map(|(<span class="kw">_</span>, scr, <span class="kw">_</span>, (motive_param, motive_body))| {
-        Exp::from(Absurd {
+        Exp::absurd(Absurd {
             scr,
             motive_param,
             motive_body,
@@ -313,18 +313,18 @@
 <span class="kw">fn </span>applicative_expression(input: CpcInput) -&gt; CpcResult&lt;Exp&gt; {
     <span class="kw">let </span>(input, fun) = atomic_expression.parse(input)<span class="question-mark">?</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>it = iterator(input, atomic_expression);
-    <span class="kw">let </span>res = it.fold(fun, |fun, arg| Exp::from(App { fun, arg }));
+    <span class="kw">let </span>res = it.fold(fun, |fun, arg| Exp::app(App { fun, arg }));
 
     it.finish().map(|(input, <span class="kw">_</span>)| (input, res))
 }
 
 <span class="kw">fn </span>atomic_expression(input: CpcInput) -&gt; CpcResult&lt;Exp&gt; {
     <span class="kw">let </span>univ_expression =
-        separated_pair(keyword(<span class="string">"Univ"</span>), symbol(<span class="string">"@"</span>), level).map(|(<span class="kw">_</span>, lvl)| Exp::from(lvl));
+        separated_pair(keyword(<span class="string">"Univ"</span>), symbol(<span class="string">"@"</span>), level).map(|(<span class="kw">_</span>, lvl)| Exp::Univ(lvl));
     alt((
         value(Exp::Bottom, alt((keyword(<span class="string">"Bottom"</span>), symbol(<span class="string">"⊥"</span>)))),
         univ_expression,
-        identifier.map(Exp::from),
+        identifier.map(Exp::Var),
         parened(expression),
     ))
     .parse(input)
