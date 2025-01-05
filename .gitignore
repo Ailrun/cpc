@@ -1,1 +1,9 @@
+# cargo
 /target
+
+# emacs
+*~
+\#*\#
+.\#*
+.projectile
+.dir-locals.el
