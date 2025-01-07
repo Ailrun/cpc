@@ -1,5 +1,6 @@
 //! # Abstract Syntax Tree (AST) of CPC
 
+use serde::Serialize;
 use std::collections::HashMap;
 
 pub type Ident = String;
@@ -10,7 +11,7 @@ pub type Ident = String;
 pub type Level = u128;
 
 /// # Name ([Ident]) with a Type
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct TypedName<T> {
     pub name: Ident,
     pub typ: T,
@@ -27,7 +28,7 @@ pub struct TypedName<T> {
 // }
 
 /// # AST for An Expression/Type
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub enum Exp {
     Univ(Level),
     // Data(Ident),
@@ -50,7 +51,7 @@ pub type Typ = Exp;
 pub type Ctx = HashMap<Ident, Norm>;
 
 /// # AST for Normal Expression
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub enum Norm {
     Univ(Level),
     // Data(Ident),
@@ -62,7 +63,7 @@ pub enum Norm {
 }
 
 /// # AST for Neutral Expression
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub enum Neut {
     // Rec(Ident),
     Absurd(Box<Absurd<Norm, Self>>),
@@ -75,7 +76,7 @@ pub enum Neut {
 /// Type parameter `N` represents **N**ormal subcase, and `R`
 /// represents Neut**r**al subcase. In a non-normalized
 /// expression, they are both `Self`.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Absurd<N, R> {
     pub scr: R,
     pub motive_param: Ident,
@@ -87,7 +88,7 @@ pub struct Absurd<N, R> {
 /// Type parameter `N` represents **N**ormal subcase, and `R`
 /// represents Neut**r**al subcase. In a non-normalized
 /// expression, they are both `Self`.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Pi<N> {
     pub param: TypedName<N>,
     pub ret_typ: N,
@@ -98,7 +99,7 @@ pub struct Pi<N> {
 /// Type parameter `N` represents **N**ormal subcase, and `R`
 /// represents Neut**r**al subcase. In a non-normalized
 /// expression, they are both `Self`.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Fun<N> {
     pub param: TypedName<N>,
     pub body: N,
@@ -109,7 +110,7 @@ pub struct Fun<N> {
 /// Type parameter `N` represents **N**ormal subcase, and `R`
 /// represents Neut**r**al subcase. In a non-normalized
 /// expression, they are both `Self`.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct App<N, R> {
     pub fun: R,
     pub arg: N,
