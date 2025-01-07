@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["clear_chars","clear_line","clear_screen","clear_to_end_of_screen","hide_cursor","move_cursor_down","move_cursor_left","move_cursor_right","move_cursor_to","move_cursor_up","show_cursor"]};

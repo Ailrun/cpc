@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["ambiguous_expr","atom_expr","check_cast","expr_group","expr_struct_helper","multi_index","paren_or_tuple","parse_binop_rhs","parse_expr","path_or_macro_or_struct","peek_precedence","rest_of_path_or_macro_or_struct","trailer_expr","unary_expr"],"macro":["impl_by_parsing_expr"]};

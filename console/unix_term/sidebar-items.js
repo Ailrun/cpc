@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_WIDTH"],"fn":["c_result","is_a_color_terminal","is_a_terminal","key_from_utf8","poll_fd","read_bytes","read_secure","read_single_char","read_single_key","read_single_key_impl","select_or_poll_term_fd","set_title","terminal_size","wants_emoji"],"static":["IS_LANG_UTF8"]};

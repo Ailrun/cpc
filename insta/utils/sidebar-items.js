@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["format_rust_expression","is_ci","path_to_storage","style","term_width"]};

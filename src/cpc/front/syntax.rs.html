@@ -250,9 +250,11 @@
 <a href="#249" id="249">249</a>
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Abstract Syntax Tree (AST) of CPC
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Abstract Syntax Tree (AST) of CPC
 
-</span><span class="kw">use </span>std::collections::HashMap;
+</span><span class="kw">use </span>serde::Serialize;
+<span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">pub type </span>Ident = String;
 
@@ -262,7 +264,7 @@
 </span><span class="kw">pub type </span>Level = u128;
 
 <span class="doccomment">/// # Name ([Ident]) with a Type
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 </span><span class="kw">pub struct </span>TypedName&lt;T&gt; {
     <span class="kw">pub </span>name: Ident,
     <span class="kw">pub </span>typ: T,
@@ -279,7 +281,7 @@
 // }
 
 </span><span class="doccomment">/// # AST for An Expression/Type
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 </span><span class="kw">pub enum </span>Exp {
     Univ(Level),
     <span class="comment">// Data(Ident),
@@ -302,7 +304,7 @@
 </span><span class="kw">pub type </span>Ctx = HashMap&lt;Ident, Norm&gt;;
 
 <span class="doccomment">/// # AST for Normal Expression
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 </span><span class="kw">pub enum </span>Norm {
     Univ(Level),
     <span class="comment">// Data(Ident),
@@ -314,7 +316,7 @@
 }
 
 <span class="doccomment">/// # AST for Neutral Expression
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 </span><span class="kw">pub enum </span>Neut {
     <span class="comment">// Rec(Ident),
     </span>Absurd(Box&lt;Absurd&lt;Norm, <span class="self">Self</span>&gt;&gt;),
@@ -327,7 +329,7 @@
 /// Type parameter `N` represents **N**ormal subcase, and `R`
 /// represents Neut**r**al subcase. In a non-normalized
 /// expression, they are both `Self`.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 </span><span class="kw">pub struct </span>Absurd&lt;N, R&gt; {
     <span class="kw">pub </span>scr: R,
     <span class="kw">pub </span>motive_param: Ident,
@@ -339,7 +341,7 @@
 /// Type parameter `N` represents **N**ormal subcase, and `R`
 /// represents Neut**r**al subcase. In a non-normalized
 /// expression, they are both `Self`.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 </span><span class="kw">pub struct </span>Pi&lt;N&gt; {
     <span class="kw">pub </span>param: TypedName&lt;N&gt;,
     <span class="kw">pub </span>ret_typ: N,
@@ -350,7 +352,7 @@
 /// Type parameter `N` represents **N**ormal subcase, and `R`
 /// represents Neut**r**al subcase. In a non-normalized
 /// expression, they are both `Self`.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 </span><span class="kw">pub struct </span>Fun&lt;N&gt; {
     <span class="kw">pub </span>param: TypedName&lt;N&gt;,
     <span class="kw">pub </span>body: N,
@@ -361,7 +363,7 @@
 /// Type parameter `N` represents **N**ormal subcase, and `R`
 /// represents Neut**r**al subcase. In a non-normalized
 /// expression, they are both `Self`.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 </span><span class="kw">pub struct </span>App&lt;N, R&gt; {
     <span class="kw">pub </span>fun: R,
     <span class="kw">pub </span>arg: N,

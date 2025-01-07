@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["detect_newlines","encode_file_link_escape","newlines_matter","print_info","print_line","print_snapshot_summary","render_invisible","trailing_newline"],"struct":["SnapshotPrinter"]};

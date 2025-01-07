@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["diff","diff_deadline","diff_slices","diff_slices_deadline"],"mod":["capture","compact","hook","lcs","myers","patience","replace","utils"],"struct":["Capture","Compact","IdentifyDistinct","NoFinishHook","Replace"],"trait":["DiffHook"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SnapshotContents","SnapshotKind","TextSnapshotKind"],"fn":["build_binary_path","count_leading_spaces","legacy_inline_normalize","min_indentation","names_of_path","normalize_inline_snapshot","required_hashes"],"static":["RUN_ID"],"struct":["MetaData","PendingInlineSnapshot","Snapshot","TextSnapshotContents"]};
