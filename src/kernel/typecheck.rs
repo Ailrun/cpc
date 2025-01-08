@@ -81,7 +81,11 @@ pub fn infer(exp: Exp, ctx: &Ctx) -> Result<Norm, TypeCheckError> {
             }
             fun_typ => Err(TypeCheckError::NonFunction(fun_typ)),
         }?,
-        E::Var(id) => ctx[&id].clone(),
+        E::Var(id) =>
+        // We should check whether id is in ctx first.
+        {
+            ctx[&id].clone()
+        }
     };
     Ok(typ)
 }

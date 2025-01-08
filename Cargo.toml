@@ -1,12 +1,11 @@
 [package]
 name = "cpc"
 version = "0.1.0"
+authors = ["Junyoung/Clare Jang"]
 edition = "2021"
-
-[dependencies]
-insta = { version = "1.42.0", features = ["ron"] }
-nom = "^7.1.3"
-serde = { version = "1.0.217", features = ["derive"] }
+description = "Core Proof Checker"
+repository = "https://github.com/Ailrun/cpc"
+license = "BSD-3-Clause-No-Military-License"
 
 [lib]
 test = false
@@ -15,3 +14,10 @@ doctest = false
 [[bin]]
 name = "cpc"
 test = false
+
+[dependencies]
+nom = "^7.1.3"
+serde = { version = "1.0.217", features = ["derive"] }
+
+[dev-dependencies]
+insta = { version = "1.42.0", features = ["ron"] }
