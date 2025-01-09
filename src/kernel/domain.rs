@@ -68,43 +68,43 @@ pub struct AppDom {
 
 impl From<Level> for Dom {
     fn from(value: Level) -> Self {
-        Dom::Univ(value)
+        Self::Univ(value)
     }
 }
 
 impl From<PiDom> for Dom {
     fn from(value: PiDom) -> Self {
-        Dom::Pi(Box::new(value))
+        Self::Pi(Box::new(value))
     }
 }
 
 impl From<FunDom> for Dom {
     fn from(value: FunDom) -> Self {
-        Dom::Fun(Box::new(value))
+        Self::Fun(Box::new(value))
     }
 }
 
-impl<T: Into<Box<Dom>>, U: Into<DomNeut>> From<(T, U)> for Dom {
+impl<T: Into<Box<Self>>, U: Into<DomNeut>> From<(T, U)> for Dom {
     fn from(value: (T, U)) -> Self {
-        Dom::Neut(T::into(value.0), U::into(value.1))
+        Self::Neut(T::into(value.0), U::into(value.1))
     }
 }
 
 impl From<AbsurdDom> for DomNeut {
     fn from(value: AbsurdDom) -> Self {
-        DomNeut::Absurd(Box::new(value))
+        Self::Absurd(Box::new(value))
     }
 }
 
 impl From<AppDom> for DomNeut {
     fn from(value: AppDom) -> Self {
-        DomNeut::App(Box::new(value))
+        Self::App(Box::new(value))
     }
 }
 
 impl From<Ident> for DomNeut {
     fn from(value: Ident) -> Self {
-        DomNeut::Var(value)
+        Self::Var(value)
     }
 }
 

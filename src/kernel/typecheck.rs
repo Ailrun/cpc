@@ -127,9 +127,9 @@ fn check_subtyp(subtyp: Norm, supertyp: Norm, renaming: &Renaming) -> bool {
 impl Norm {
     fn check_alpha_eq(self, other: Self, renaming: &Renaming) -> bool {
         match (self, other) {
-            (Norm::Univ(self_lvl), Norm::Univ(other_lvl)) => self_lvl == other_lvl,
-            (Norm::Bottom, Norm::Bottom) => true,
-            (Norm::Pi(self_pi), Norm::Pi(other_pi)) => {
+            (Self::Univ(self_lvl), Self::Univ(other_lvl)) => self_lvl == other_lvl,
+            (Self::Bottom, Self::Bottom) => true,
+            (Self::Pi(self_pi), Self::Pi(other_pi)) => {
                 if self_pi
                     .param
                     .typ
@@ -144,7 +144,7 @@ impl Norm {
                     false
                 }
             }
-            (Norm::Fun(self_fun), Norm::Fun(other_fun)) => {
+            (Self::Fun(self_fun), Self::Fun(other_fun)) => {
                 if self_fun
                     .param
                     .typ
@@ -157,7 +157,7 @@ impl Norm {
                     false
                 }
             }
-            (Norm::Neut(self_neut), Norm::Neut(other_neut)) => {
+            (Self::Neut(self_neut), Self::Neut(other_neut)) => {
                 self_neut.check_alpha_eq(other_neut, renaming)
             }
             (_, _) => false,
@@ -168,7 +168,7 @@ impl Norm {
 impl Neut {
     fn check_alpha_eq(self, other: Self, renaming: &Renaming) -> bool {
         match (self, other) {
-            (Neut::Absurd(self_absurd), Neut::Absurd(other_absurd)) => {
+            (Self::Absurd(self_absurd), Self::Absurd(other_absurd)) => {
                 if self_absurd.scr.check_alpha_eq(other_absurd.scr, renaming) {
                     let mut newrenaming = renaming.clone();
                     newrenaming.insert(self_absurd.motive_param, other_absurd.motive_param);
@@ -179,11 +179,11 @@ impl Neut {
                     false
                 }
             }
-            (Neut::App(self_app), Neut::App(other_app)) => {
+            (Self::App(self_app), Self::App(other_app)) => {
                 self_app.fun.check_alpha_eq(other_app.fun, renaming)
                     && self_app.arg.check_alpha_eq(other_app.arg, renaming)
             }
-            (Neut::Var(self_id), Neut::Var(other_id)) => {
+            (Self::Var(self_id), Self::Var(other_id)) => {
                 renaming.get(&self_id).unwrap_or(&self_id).eq(&other_id)
             }
             (_, _) => false,

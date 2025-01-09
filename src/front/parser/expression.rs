@@ -1,4 +1,14 @@
 //! # Expression Parsers of CPC
+//!
+//! This module provides the following parsers:
+//! - [expression]
+//! - [pi_expression]
+//! - [lambda_expression]
+//! - [absurd_expression]
+//! - [applicative_expression]
+//! - [atomic_expression]
+//! - [binder_expression]
+//! - [parameter]
 use nom::{branch::*, combinator::*, sequence::*, Parser};
 
 use super::base::*;

@@ -2,19 +2,7 @@
 //! # Parsers of CPC
 //!
 //! This module implements following parsers:
-//! ## Main Parser
 //! - [proper_expression]
-//! ## Sub-Parsers
-//! ### Expression Case Parsers
-//! - [expression]
-//! - [pi_expression]
-//! - [lambda_expression]
-//! - [absurd_expression]
-//! - [applicative_expression]
-//! - [atomic_expression]
-//! ### Expression Helpers
-//! - [binder_expression]
-//! - [parameter]
 use nom::{error::Error, Finish, Parser};
 
 mod base;

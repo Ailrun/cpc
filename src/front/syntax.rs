@@ -128,7 +128,7 @@ pub struct App<N, R> {
 /// implementation, and Rust cannot pick one.
 impl<T> TypedName<T> {
     pub fn from<U: Into<T>>(value: TypedName<U>) -> Self {
-        TypedName {
+        Self {
             name: value.name,
             typ: Into::into(value.typ),
         }
@@ -141,50 +141,50 @@ impl<T> TypedName<T> {
 
 impl From<Level> for Exp {
     fn from(value: Level) -> Self {
-        Exp::Univ(value)
+        Self::Univ(value)
     }
 }
 
-impl From<Absurd<Exp, Exp>> for Exp {
-    fn from(value: Absurd<Exp, Exp>) -> Self {
-        Exp::Absurd(Box::new(value))
+impl From<Absurd<Self, Self>> for Exp {
+    fn from(value: Absurd<Self, Self>) -> Self {
+        Self::Absurd(Box::new(value))
     }
 }
 
-impl From<Pi<Exp>> for Exp {
-    fn from(value: Pi<Exp>) -> Self {
-        Exp::Pi(Box::new(value))
+impl From<Pi<Self>> for Exp {
+    fn from(value: Pi<Self>) -> Self {
+        Self::Pi(Box::new(value))
     }
 }
 
-impl From<Fun<Exp>> for Exp {
-    fn from(value: Fun<Exp>) -> Self {
-        Exp::Fun(Box::new(value))
+impl From<Fun<Self>> for Exp {
+    fn from(value: Fun<Self>) -> Self {
+        Self::Fun(Box::new(value))
     }
 }
 
-impl From<App<Exp, Exp>> for Exp {
-    fn from(value: App<Exp, Exp>) -> Self {
-        Exp::App(Box::new(value))
+impl From<App<Self, Self>> for Exp {
+    fn from(value: App<Self, Self>) -> Self {
+        Self::App(Box::new(value))
     }
 }
 
 impl From<Ident> for Exp {
     fn from(value: Ident) -> Self {
-        Exp::Var(value)
+        Self::Var(value)
     }
 }
 
 impl From<Norm> for Exp {
     fn from(value: Norm) -> Self {
         match value {
-            Norm::Univ(lvl) => Exp::from(lvl),
-            Norm::Bottom => Exp::Bottom,
-            Norm::Pi(pi) => Exp::from(Pi {
+            Norm::Univ(lvl) => Self::from(lvl),
+            Norm::Bottom => Self::Bottom,
+            Norm::Pi(pi) => Self::from(Pi {
                 param: TypedName::from(pi.param),
                 ret_typ: From::from(pi.ret_typ),
             }),
-            Norm::Fun(fun) => Exp::from(Fun {
+            Norm::Fun(fun) => Self::from(Fun {
                 param: TypedName::from(fun.param),
                 body: From::from(fun.body),
             }),
@@ -196,58 +196,58 @@ impl From<Norm> for Exp {
 impl From<Neut> for Exp {
     fn from(value: Neut) -> Self {
         match value {
-            Neut::Absurd(absurd) => Exp::from(Absurd {
+            Neut::Absurd(absurd) => Self::from(Absurd {
                 scr: From::from(absurd.scr),
                 motive_param: absurd.motive_param,
                 motive_body: From::from(absurd.motive_body),
             }),
-            Neut::App(app) => Exp::from(App {
+            Neut::App(app) => Self::from(App {
                 fun: From::from(app.fun),
                 arg: From::from(app.arg),
             }),
-            Neut::Var(id) => Exp::from(id),
+            Neut::Var(id) => Self::from(id),
         }
     }
 }
 
 impl<T: Into<Neut>> From<T> for Norm {
     fn from(value: T) -> Self {
-        Norm::Neut(T::into(value))
+        Self::Neut(T::into(value))
     }
 }
 
 impl From<Level> for Norm {
     fn from(value: Level) -> Self {
-        Norm::Univ(value)
+        Self::Univ(value)
     }
 }
 
-impl From<Pi<Norm>> for Norm {
-    fn from(value: Pi<Norm>) -> Self {
-        Norm::Pi(Box::new(value))
+impl From<Pi<Self>> for Norm {
+    fn from(value: Pi<Self>) -> Self {
+        Self::Pi(Box::new(value))
     }
 }
 
-impl From<Fun<Norm>> for Norm {
-    fn from(value: Fun<Norm>) -> Self {
-        Norm::Fun(Box::new(value))
+impl From<Fun<Self>> for Norm {
+    fn from(value: Fun<Self>) -> Self {
+        Self::Fun(Box::new(value))
     }
 }
 
-impl From<Absurd<Norm, Neut>> for Neut {
-    fn from(value: Absurd<Norm, Neut>) -> Self {
-        Neut::Absurd(Box::new(value))
+impl From<Absurd<Norm, Self>> for Neut {
+    fn from(value: Absurd<Norm, Self>) -> Self {
+        Self::Absurd(Box::new(value))
     }
 }
 
-impl From<App<Norm, Neut>> for Neut {
-    fn from(value: App<Norm, Neut>) -> Self {
-        Neut::App(Box::new(value))
+impl From<App<Norm, Self>> for Neut {
+    fn from(value: App<Norm, Self>) -> Self {
+        Self::App(Box::new(value))
     }
 }
 
 impl From<Ident> for Neut {
     fn from(value: Ident) -> Self {
-        Neut::Var(value)
+        Self::Var(value)
     }
 }

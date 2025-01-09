@@ -4,8 +4,12 @@ version = "0.1.0"
 authors = ["Junyoung/Clare Jang"]
 edition = "2021"
 description = "Core Proof Checker"
+readme = "README.md"
 repository = "https://github.com/Ailrun/cpc"
 license = "BSD-3-Clause-No-Military-License"
+keywords = ["Proof Assistant", "Dependent Type", "Language", "Interpreter"]
+categories = ["mathematics", "compilers"]
+
 
 [lib]
 doctest = false
