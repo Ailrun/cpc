@@ -17,6 +17,7 @@ pub enum TypeCheckError {
     NonType(Norm),
     NonFunction(Norm),
     IncompatibleType(Norm, Norm),
+    NoSuchVariable(Ident, Ctx),
 }
 
 pub type TypeCheck<T> = Result<T, TypeCheckError>;
@@ -72,20 +73,14 @@ pub fn infer(exp: Exp, ctx: &Ctx) -> Result<Norm, TypeCheckError> {
         E::App(app) => match infer(app.fun, ctx)? {
             EN::Pi(pi) => {
                 check(app.arg.clone(), pi.param.typ.clone(), ctx)?;
-                Ok(subst_nbe_typ(
-                    pi.param,
-                    From::from(pi.ret_typ),
-                    app.arg,
-                    ctx,
-                ))
+                subst_nbe_typ(pi.param, From::from(pi.ret_typ), app.arg, ctx)
             }
-            fun_typ => Err(TypeCheckError::NonFunction(fun_typ)),
-        }?,
-        E::Var(id) =>
-        // We should check whether id is in ctx first.
-        {
-            ctx[&id].clone()
-        }
+            fun_typ => Err(TypeCheckError::NonFunction(fun_typ))?,
+        },
+        E::Var(id) => match ctx.get(&id) {
+            Some(typ) => typ.clone(),
+            None => Err(TypeCheckError::NoSuchVariable(id, ctx.clone()))?,
+        },
     };
     Ok(typ)
 }
@@ -188,11 +183,7 @@ impl Neut {
                 self_app.fun.check_alpha_eq(other_app.fun, renaming)
                     && self_app.arg.check_alpha_eq(other_app.arg, renaming)
             }
-            // This case is wrong: What if `self_id` is not in `renaming`?
-            // This should use a safe method to check that and then decide
-            // whether directly compare `self_id` or its renamed version
-            // with `other_id`.
-            (Neut::Var(self_id), Neut::Var(other_id)) => renaming[&self_id] == other_id,
+            (Neut::Var(self_id), Neut::Var(other_id)) => renaming.get(&self_id).unwrap_or(&self_id).eq(&other_id),
             (_, _) => false,
         }
     }
