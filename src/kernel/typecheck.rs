@@ -51,14 +51,14 @@ pub fn infer(exp: Exp, ctx: &Ctx) -> Result<Norm, TypeCheckError> {
             )
         }
         E::Pi(pi) => {
-            let param_lvl = infer_typ_lvl(pi.param.typ.clone(), &ctx)?;
+            let param_lvl = infer_typ_lvl(pi.param.typ.clone(), ctx)?;
             let mut newctx = ctx.clone();
             newctx.insert(pi.param.name.clone(), pi.param.typ.clone().nbe_typ(ctx));
             let ret_lvl = infer_typ_lvl(pi.ret_typ, &newctx)?;
             EN::from(param_lvl.max(ret_lvl))
         }
         E::Fun(fun) => {
-            infer_typ_lvl(fun.param.typ.clone(), &ctx)?;
+            infer_typ_lvl(fun.param.typ.clone(), ctx)?;
             let mut newctx = ctx.clone();
             newctx.insert(fun.param.name.clone(), fun.param.typ.clone().nbe_typ(ctx));
             let ret_typ = infer(fun.body, &newctx)?;

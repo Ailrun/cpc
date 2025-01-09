@@ -35,8 +35,7 @@ fn is_not_keyword(s: &str) -> bool {
     !KEYWORD_LIST.contains(&s)
 }
 
-/// ### Constants for Identifier-likes
-
+/// # List of Keywords in CPC
 const KEYWORD_LIST: [&str; 11] = [
     "forall", "Pi", "∀", "Π", "fun", "lambda", "λ", "Univ", "Bottom", "absurd", "return",
 ];

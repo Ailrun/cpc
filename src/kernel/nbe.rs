@@ -352,7 +352,8 @@ mod tests {
 
     #[test]
     fn pi_nbe_typ_return_type0() {
-        let exp_str = "Pi (qqq : Bottom) . (fun (a : Bottom) -> absurd a return (qwdwq . Univ@0)) qqq";
+        let exp_str =
+            "Pi (qqq : Bottom) . (fun (a : Bottom) -> absurd a return (qwdwq . Univ@0)) qqq";
         let exp = parser::proper_expression(exp_str).unwrap();
         insta::with_settings!({
             description => exp_str,
