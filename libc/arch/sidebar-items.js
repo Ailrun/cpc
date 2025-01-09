@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"type":["c_char_def"]};

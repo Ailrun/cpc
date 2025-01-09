@@ -197,7 +197,27 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
 //!
 //! This module provides both type checking and inference functions
 //! based on NbE algorithm from [Module nbe](crate::kernel::nbe).
@@ -216,6 +236,7 @@
     NonType(Norm),
     NonFunction(Norm),
     IncompatibleType(Norm, Norm),
+    NoSuchVariable(Ident, Ctx),
 }
 
 <span class="kw">pub type </span>TypeCheck&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, TypeCheckError&gt;;
@@ -271,20 +292,14 @@
         E::App(app) =&gt; <span class="kw">match </span>infer(app.fun, ctx)<span class="question-mark">? </span>{
             EN::Pi(pi) =&gt; {
                 check(app.arg.clone(), pi.param.typ.clone(), ctx)<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(subst_nbe_typ(
-                    pi.param,
-                    From::from(pi.ret_typ),
-                    app.arg,
-                    ctx,
-                ))
+                subst_nbe_typ(pi.param, From::from(pi.ret_typ), app.arg, ctx)
             }
-            fun_typ =&gt; <span class="prelude-val">Err</span>(TypeCheckError::NonFunction(fun_typ)),
-        }<span class="question-mark">?</span>,
-        E::Var(id) =&gt;
-        <span class="comment">// We should check whether id is in ctx first.
-        </span>{
-            ctx[<span class="kw-2">&amp;</span>id].clone()
-        }
+            fun_typ =&gt; <span class="prelude-val">Err</span>(TypeCheckError::NonFunction(fun_typ))<span class="question-mark">?</span>,
+        },
+        E::Var(id) =&gt; <span class="kw">match </span>ctx.get(<span class="kw-2">&amp;</span>id) {
+            <span class="prelude-val">Some</span>(typ) =&gt; typ.clone(),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(TypeCheckError::NoSuchVariable(id, ctx.clone()))<span class="question-mark">?</span>,
+        },
     };
     <span class="prelude-val">Ok</span>(typ)
 }
@@ -387,13 +402,38 @@
                 self_app.fun.check_alpha_eq(other_app.fun, renaming)
                     &amp;&amp; self_app.arg.check_alpha_eq(other_app.arg, renaming)
             }
-            <span class="comment">// This case is wrong: What if `self_id` is not in `renaming`?
-            // This should use a safe method to check that and then decide
-            // whether directly compare `self_id` or its renamed version
-            // with `other_id`.
-            </span>(Neut::Var(self_id), Neut::Var(other_id)) =&gt; renaming[<span class="kw-2">&amp;</span>self_id] == other_id,
+            (Neut::Var(self_id), Neut::Var(other_id)) =&gt; {
+                renaming.get(<span class="kw-2">&amp;</span>self_id).unwrap_or(<span class="kw-2">&amp;</span>self_id).eq(<span class="kw-2">&amp;</span>other_id)
+            }
             (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
         }
+    }
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::collections::HashMap;
+
+    <span class="kw">use crate</span>::{assert_ok, front::parser, kernel::typecheck::<span class="kw-2">*</span>};
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>application_type_checks0() {
+        <span class="kw">let </span>exp_str = <span class="string">"(fun (a : Univ@0) -&gt; a) Bottom"</span>;
+        <span class="kw">let </span>typ_str = <span class="string">"Univ@0"</span>;
+        <span class="kw">let </span>ctx = HashMap::new();
+        <span class="kw">let </span>exp = parser::proper_expression(exp_str).unwrap();
+        <span class="kw">let </span>typ = parser::proper_expression(typ_str).unwrap().nbe_typ(<span class="kw-2">&amp;</span>ctx);
+        <span class="macro">assert_ok!</span>(check(exp, typ, <span class="kw-2">&amp;</span>ctx));
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>application_type_checks1() {
+        <span class="kw">let </span>exp_str = <span class="string">"(fun (a : Pi (qwe : Univ@1) . Univ@1) -&gt; a) (lambda (b : Univ@1) -&gt; b)"</span>;
+        <span class="kw">let </span>typ_str = <span class="string">"Pi (d : Univ@1) . Univ@1"</span>;
+        <span class="kw">let </span>ctx = HashMap::new();
+        <span class="kw">let </span>exp = parser::proper_expression(exp_str).unwrap();
+        <span class="kw">let </span>typ = parser::proper_expression(typ_str).unwrap().nbe_typ(<span class="kw-2">&amp;</span>ctx);
+        <span class="macro">assert_ok!</span>(check(exp, typ, <span class="kw-2">&amp;</span>ctx));
     }
 }
 </code></pre></div></section></main></body></html>

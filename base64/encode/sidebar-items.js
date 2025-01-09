@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["add_padding","encode","encode_config","encode_config_buf","encode_config_slice","encode_to_slice","encode_with_padding","encoded_size","read_u64"]};

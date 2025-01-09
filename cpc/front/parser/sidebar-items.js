@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["KEYWORD_LIST"],"fn":["absurd_expression","applicative_expression","atomic_expression","binder_expression","expression","full_expression","identifier","is_not_keyword","keyword","lambda_expression","level","parameter","parened","pi_expression","symbol"]};
+window.SIDEBAR_ITEMS = {"fn":["proper_expression"],"mod":["base","combinators","expression","lexerlike"]};

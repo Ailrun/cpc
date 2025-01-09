@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["SerializationFormat","SnapshotLocation"],"fn":["serialize_content","serialize_value"]};

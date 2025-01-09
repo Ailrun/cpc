@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["CURRENT_SETTINGS"],"static":["DEFAULT_SETTINGS"],"struct":["Settings","SettingsBindDropGuard"]};

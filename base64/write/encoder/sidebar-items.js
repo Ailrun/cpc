@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["BUF_SIZE","MAX_INPUT_LEN","MIN_ENCODE_CHUNK_SIZE"],"struct":["EncoderWriter"]};

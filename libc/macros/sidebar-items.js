@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["__item","cfg_if","const_fn","deprecated_mach","e","f","missing","prelude","s","s_no_extra_traits","s_paren","safe_f"]};

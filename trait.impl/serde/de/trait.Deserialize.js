@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["ron",[["impl&lt;'de&gt; <a class=\"trait\" href=\"serde/de/trait.Deserialize.html\" title=\"trait serde::de::Deserialize\">Deserialize</a>&lt;'de&gt; for <a class=\"enum\" href=\"ron/value/enum.Value.html\" title=\"enum ron::value::Value\">Value</a>"],["impl&lt;'de&gt; <a class=\"trait\" href=\"serde/de/trait.Deserialize.html\" title=\"trait serde::de::Deserialize\">Deserialize</a>&lt;'de&gt; for <a class=\"struct\" href=\"ron/extensions/struct.Extensions.html\" title=\"struct ron::extensions::Extensions\">Extensions</a>"],["impl&lt;'de&gt; <a class=\"trait\" href=\"serde/de/trait.Deserialize.html\" title=\"trait serde::de::Deserialize\">Deserialize</a>&lt;'de&gt; for <a class=\"struct\" href=\"ron/options/struct.Options.html\" title=\"struct ron::options::Options\">Options</a><div class=\"where\">where\n    <a class=\"struct\" href=\"ron/options/struct.Options.html\" title=\"struct ron::options::Options\">Options</a>: <a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a>,</div>"],["impl&lt;'de&gt; <a class=\"trait\" href=\"serde/de/trait.Deserialize.html\" title=\"trait serde::de::Deserialize\">Deserialize</a>&lt;'de&gt; for <a class=\"struct\" href=\"ron/ser/struct.PrettyConfig.html\" title=\"struct ron::ser::PrettyConfig\">PrettyConfig</a><div class=\"where\">where\n    <a class=\"struct\" href=\"ron/ser/struct.PrettyConfig.html\" title=\"struct ron::ser::PrettyConfig\">PrettyConfig</a>: <a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a>,</div>"],["impl&lt;'de&gt; <a class=\"trait\" href=\"serde/de/trait.Deserialize.html\" title=\"trait serde::de::Deserialize\">Deserialize</a>&lt;'de&gt; for <a class=\"struct\" href=\"ron/value/struct.Map.html\" title=\"struct ron::value::Map\">Map</a>"]]],["serde",[]]]);
+    var implementors = Object.fromEntries([["serde",[]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[1906,13]}
+//{"start":57,"fragment_lengths":[12]}

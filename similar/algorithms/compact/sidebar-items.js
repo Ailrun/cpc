@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["cleanup_diff_ops","shift_diff_ops_down","shift_diff_ops_up"],"struct":["Compact"]};

@@ -1,2 +1,2 @@
-window.ALL_CRATES = ["base64","bitflags","console","cpc","insta","libc","linked_hash_map","memchr","minimal_lexical","nom","once_cell","proc_macro2","quote","ron","serde","serde_derive","similar","syn","unicode_ident"];
-//{"start":21,"fragment_lengths":[8,11,10,6,8,7,18,9,18,6,12,14,8,6,8,15,10,6,16]}
+window.ALL_CRATES = ["cpc","memchr","minimal_lexical","nom","proc_macro2","quote","serde","serde_derive","syn","unicode_ident"];
+//{"start":21,"fragment_lengths":[5,9,18,6,14,8,8,15,6,16]}

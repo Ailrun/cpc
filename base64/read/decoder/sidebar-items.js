@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["BASE64_CHUNK_SIZE","BUF_SIZE","DECODED_CHUNK_SIZE"],"struct":["DecoderReader"]};

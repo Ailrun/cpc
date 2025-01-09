@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["State"],"fn":["default_decimal_floats","default_depth_limit","default_enumerate_arrays","default_indentor","default_new_line","default_separate_tuple_members","default_separator","default_struct_names","to_string","to_string_pretty","to_writer","to_writer_pretty"],"mod":["value"],"struct":["Pretty","PrettyConfig","Serializer"]};

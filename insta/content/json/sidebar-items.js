@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["BB","BS","COMPACT_MAX_CHARS","FF","NN","QU","RR","TT","U"],"enum":["Format"],"fn":["format_float","to_string","to_string_compact","to_string_pretty"],"static":["ESCAPE"],"struct":["Serializer"]};

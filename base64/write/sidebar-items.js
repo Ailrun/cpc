@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["encoder","encoder_string_writer"],"struct":["EncoderStringWriter","EncoderWriter"]};
