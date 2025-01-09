@@ -381,7 +381,7 @@
 /// implementation, and Rust cannot pick one.
 </span><span class="kw">impl</span>&lt;T&gt; TypedName&lt;T&gt; {
     <span class="kw">pub fn </span>from&lt;U: Into&lt;T&gt;&gt;(value: TypedName&lt;U&gt;) -&gt; <span class="self">Self </span>{
-        TypedName {
+        <span class="self">Self </span>{
             name: value.name,
             typ: Into::into(value.typ),
         }
@@ -394,50 +394,50 @@
 
 </span><span class="kw">impl </span>From&lt;Level&gt; <span class="kw">for </span>Exp {
     <span class="kw">fn </span>from(value: Level) -&gt; <span class="self">Self </span>{
-        Exp::Univ(value)
+        <span class="self">Self</span>::Univ(value)
     }
 }
 
-<span class="kw">impl </span>From&lt;Absurd&lt;Exp, Exp&gt;&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: Absurd&lt;Exp, Exp&gt;) -&gt; <span class="self">Self </span>{
-        Exp::Absurd(Box::new(value))
+<span class="kw">impl </span>From&lt;Absurd&lt;<span class="self">Self</span>, <span class="self">Self</span>&gt;&gt; <span class="kw">for </span>Exp {
+    <span class="kw">fn </span>from(value: Absurd&lt;<span class="self">Self</span>, <span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Absurd(Box::new(value))
     }
 }
 
-<span class="kw">impl </span>From&lt;Pi&lt;Exp&gt;&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: Pi&lt;Exp&gt;) -&gt; <span class="self">Self </span>{
-        Exp::Pi(Box::new(value))
+<span class="kw">impl </span>From&lt;Pi&lt;<span class="self">Self</span>&gt;&gt; <span class="kw">for </span>Exp {
+    <span class="kw">fn </span>from(value: Pi&lt;<span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Pi(Box::new(value))
     }
 }
 
-<span class="kw">impl </span>From&lt;Fun&lt;Exp&gt;&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: Fun&lt;Exp&gt;) -&gt; <span class="self">Self </span>{
-        Exp::Fun(Box::new(value))
+<span class="kw">impl </span>From&lt;Fun&lt;<span class="self">Self</span>&gt;&gt; <span class="kw">for </span>Exp {
+    <span class="kw">fn </span>from(value: Fun&lt;<span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Fun(Box::new(value))
     }
 }
 
-<span class="kw">impl </span>From&lt;App&lt;Exp, Exp&gt;&gt; <span class="kw">for </span>Exp {
-    <span class="kw">fn </span>from(value: App&lt;Exp, Exp&gt;) -&gt; <span class="self">Self </span>{
-        Exp::App(Box::new(value))
+<span class="kw">impl </span>From&lt;App&lt;<span class="self">Self</span>, <span class="self">Self</span>&gt;&gt; <span class="kw">for </span>Exp {
+    <span class="kw">fn </span>from(value: App&lt;<span class="self">Self</span>, <span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::App(Box::new(value))
     }
 }
 
 <span class="kw">impl </span>From&lt;Ident&gt; <span class="kw">for </span>Exp {
     <span class="kw">fn </span>from(value: Ident) -&gt; <span class="self">Self </span>{
-        Exp::Var(value)
+        <span class="self">Self</span>::Var(value)
     }
 }
 
 <span class="kw">impl </span>From&lt;Norm&gt; <span class="kw">for </span>Exp {
     <span class="kw">fn </span>from(value: Norm) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>value {
-            Norm::Univ(lvl) =&gt; Exp::from(lvl),
-            Norm::Bottom =&gt; Exp::Bottom,
-            Norm::Pi(pi) =&gt; Exp::from(Pi {
+            Norm::Univ(lvl) =&gt; <span class="self">Self</span>::from(lvl),
+            Norm::Bottom =&gt; <span class="self">Self</span>::Bottom,
+            Norm::Pi(pi) =&gt; <span class="self">Self</span>::from(Pi {
                 param: TypedName::from(pi.param),
                 ret_typ: From::from(pi.ret_typ),
             }),
-            Norm::Fun(fun) =&gt; Exp::from(Fun {
+            Norm::Fun(fun) =&gt; <span class="self">Self</span>::from(Fun {
                 param: TypedName::from(fun.param),
                 body: From::from(fun.body),
             }),
@@ -449,59 +449,59 @@
 <span class="kw">impl </span>From&lt;Neut&gt; <span class="kw">for </span>Exp {
     <span class="kw">fn </span>from(value: Neut) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>value {
-            Neut::Absurd(absurd) =&gt; Exp::from(Absurd {
+            Neut::Absurd(absurd) =&gt; <span class="self">Self</span>::from(Absurd {
                 scr: From::from(absurd.scr),
                 motive_param: absurd.motive_param,
                 motive_body: From::from(absurd.motive_body),
             }),
-            Neut::App(app) =&gt; Exp::from(App {
+            Neut::App(app) =&gt; <span class="self">Self</span>::from(App {
                 fun: From::from(app.fun),
                 arg: From::from(app.arg),
             }),
-            Neut::Var(id) =&gt; Exp::from(id),
+            Neut::Var(id) =&gt; <span class="self">Self</span>::from(id),
         }
     }
 }
 
 <span class="kw">impl</span>&lt;T: Into&lt;Neut&gt;&gt; From&lt;T&gt; <span class="kw">for </span>Norm {
     <span class="kw">fn </span>from(value: T) -&gt; <span class="self">Self </span>{
-        Norm::Neut(T::into(value))
+        <span class="self">Self</span>::Neut(T::into(value))
     }
 }
 
 <span class="kw">impl </span>From&lt;Level&gt; <span class="kw">for </span>Norm {
     <span class="kw">fn </span>from(value: Level) -&gt; <span class="self">Self </span>{
-        Norm::Univ(value)
+        <span class="self">Self</span>::Univ(value)
     }
 }
 
-<span class="kw">impl </span>From&lt;Pi&lt;Norm&gt;&gt; <span class="kw">for </span>Norm {
-    <span class="kw">fn </span>from(value: Pi&lt;Norm&gt;) -&gt; <span class="self">Self </span>{
-        Norm::Pi(Box::new(value))
+<span class="kw">impl </span>From&lt;Pi&lt;<span class="self">Self</span>&gt;&gt; <span class="kw">for </span>Norm {
+    <span class="kw">fn </span>from(value: Pi&lt;<span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Pi(Box::new(value))
     }
 }
 
-<span class="kw">impl </span>From&lt;Fun&lt;Norm&gt;&gt; <span class="kw">for </span>Norm {
-    <span class="kw">fn </span>from(value: Fun&lt;Norm&gt;) -&gt; <span class="self">Self </span>{
-        Norm::Fun(Box::new(value))
+<span class="kw">impl </span>From&lt;Fun&lt;<span class="self">Self</span>&gt;&gt; <span class="kw">for </span>Norm {
+    <span class="kw">fn </span>from(value: Fun&lt;<span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Fun(Box::new(value))
     }
 }
 
-<span class="kw">impl </span>From&lt;Absurd&lt;Norm, Neut&gt;&gt; <span class="kw">for </span>Neut {
-    <span class="kw">fn </span>from(value: Absurd&lt;Norm, Neut&gt;) -&gt; <span class="self">Self </span>{
-        Neut::Absurd(Box::new(value))
+<span class="kw">impl </span>From&lt;Absurd&lt;Norm, <span class="self">Self</span>&gt;&gt; <span class="kw">for </span>Neut {
+    <span class="kw">fn </span>from(value: Absurd&lt;Norm, <span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Absurd(Box::new(value))
     }
 }
 
-<span class="kw">impl </span>From&lt;App&lt;Norm, Neut&gt;&gt; <span class="kw">for </span>Neut {
-    <span class="kw">fn </span>from(value: App&lt;Norm, Neut&gt;) -&gt; <span class="self">Self </span>{
-        Neut::App(Box::new(value))
+<span class="kw">impl </span>From&lt;App&lt;Norm, <span class="self">Self</span>&gt;&gt; <span class="kw">for </span>Neut {
+    <span class="kw">fn </span>from(value: App&lt;Norm, <span class="self">Self</span>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::App(Box::new(value))
     }
 }
 
 <span class="kw">impl </span>From&lt;Ident&gt; <span class="kw">for </span>Neut {
     <span class="kw">fn </span>from(value: Ident) -&gt; <span class="self">Self </span>{
-        Neut::Var(value)
+        <span class="self">Self</span>::Var(value)
     }
 }
 </code></pre></div></section></main></body></html>

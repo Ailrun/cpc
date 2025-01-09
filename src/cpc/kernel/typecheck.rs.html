@@ -346,9 +346,9 @@
 <span class="kw">impl </span>Norm {
     <span class="kw">fn </span>check_alpha_eq(<span class="self">self</span>, other: <span class="self">Self</span>, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
         <span class="kw">match </span>(<span class="self">self</span>, other) {
-            (Norm::Univ(self_lvl), Norm::Univ(other_lvl)) =&gt; self_lvl == other_lvl,
-            (Norm::Bottom, Norm::Bottom) =&gt; <span class="bool-val">true</span>,
-            (Norm::Pi(self_pi), Norm::Pi(other_pi)) =&gt; {
+            (<span class="self">Self</span>::Univ(self_lvl), <span class="self">Self</span>::Univ(other_lvl)) =&gt; self_lvl == other_lvl,
+            (<span class="self">Self</span>::Bottom, <span class="self">Self</span>::Bottom) =&gt; <span class="bool-val">true</span>,
+            (<span class="self">Self</span>::Pi(self_pi), <span class="self">Self</span>::Pi(other_pi)) =&gt; {
                 <span class="kw">if </span>self_pi
                     .param
                     .typ
@@ -363,7 +363,7 @@
                     <span class="bool-val">false
                 </span>}
             }
-            (Norm::Fun(self_fun), Norm::Fun(other_fun)) =&gt; {
+            (<span class="self">Self</span>::Fun(self_fun), <span class="self">Self</span>::Fun(other_fun)) =&gt; {
                 <span class="kw">if </span>self_fun
                     .param
                     .typ
@@ -376,7 +376,7 @@
                     <span class="bool-val">false
                 </span>}
             }
-            (Norm::Neut(self_neut), Norm::Neut(other_neut)) =&gt; {
+            (<span class="self">Self</span>::Neut(self_neut), <span class="self">Self</span>::Neut(other_neut)) =&gt; {
                 self_neut.check_alpha_eq(other_neut, renaming)
             }
             (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
@@ -387,7 +387,7 @@
 <span class="kw">impl </span>Neut {
     <span class="kw">fn </span>check_alpha_eq(<span class="self">self</span>, other: <span class="self">Self</span>, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
         <span class="kw">match </span>(<span class="self">self</span>, other) {
-            (Neut::Absurd(self_absurd), Neut::Absurd(other_absurd)) =&gt; {
+            (<span class="self">Self</span>::Absurd(self_absurd), <span class="self">Self</span>::Absurd(other_absurd)) =&gt; {
                 <span class="kw">if </span>self_absurd.scr.check_alpha_eq(other_absurd.scr, renaming) {
                     <span class="kw">let </span><span class="kw-2">mut </span>newrenaming = renaming.clone();
                     newrenaming.insert(self_absurd.motive_param, other_absurd.motive_param);
@@ -398,11 +398,11 @@
                     <span class="bool-val">false
                 </span>}
             }
-            (Neut::App(self_app), Neut::App(other_app)) =&gt; {
+            (<span class="self">Self</span>::App(self_app), <span class="self">Self</span>::App(other_app)) =&gt; {
                 self_app.fun.check_alpha_eq(other_app.fun, renaming)
                     &amp;&amp; self_app.arg.check_alpha_eq(other_app.arg, renaming)
             }
-            (Neut::Var(self_id), Neut::Var(other_id)) =&gt; {
+            (<span class="self">Self</span>::Var(self_id), <span class="self">Self</span>::Var(other_id)) =&gt; {
                 renaming.get(<span class="kw-2">&amp;</span>self_id).unwrap_or(<span class="kw-2">&amp;</span>self_id).eq(<span class="kw-2">&amp;</span>other_id)
             }
             (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,

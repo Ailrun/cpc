@@ -189,43 +189,43 @@
 
 </span><span class="kw">impl </span>From&lt;Level&gt; <span class="kw">for </span>Dom {
     <span class="kw">fn </span>from(value: Level) -&gt; <span class="self">Self </span>{
-        Dom::Univ(value)
+        <span class="self">Self</span>::Univ(value)
     }
 }
 
 <span class="kw">impl </span>From&lt;PiDom&gt; <span class="kw">for </span>Dom {
     <span class="kw">fn </span>from(value: PiDom) -&gt; <span class="self">Self </span>{
-        Dom::Pi(Box::new(value))
+        <span class="self">Self</span>::Pi(Box::new(value))
     }
 }
 
 <span class="kw">impl </span>From&lt;FunDom&gt; <span class="kw">for </span>Dom {
     <span class="kw">fn </span>from(value: FunDom) -&gt; <span class="self">Self </span>{
-        Dom::Fun(Box::new(value))
+        <span class="self">Self</span>::Fun(Box::new(value))
     }
 }
 
-<span class="kw">impl</span>&lt;T: Into&lt;Box&lt;Dom&gt;&gt;, U: Into&lt;DomNeut&gt;&gt; From&lt;(T, U)&gt; <span class="kw">for </span>Dom {
+<span class="kw">impl</span>&lt;T: Into&lt;Box&lt;<span class="self">Self</span>&gt;&gt;, U: Into&lt;DomNeut&gt;&gt; From&lt;(T, U)&gt; <span class="kw">for </span>Dom {
     <span class="kw">fn </span>from(value: (T, U)) -&gt; <span class="self">Self </span>{
-        Dom::Neut(T::into(value.<span class="number">0</span>), U::into(value.<span class="number">1</span>))
+        <span class="self">Self</span>::Neut(T::into(value.<span class="number">0</span>), U::into(value.<span class="number">1</span>))
     }
 }
 
 <span class="kw">impl </span>From&lt;AbsurdDom&gt; <span class="kw">for </span>DomNeut {
     <span class="kw">fn </span>from(value: AbsurdDom) -&gt; <span class="self">Self </span>{
-        DomNeut::Absurd(Box::new(value))
+        <span class="self">Self</span>::Absurd(Box::new(value))
     }
 }
 
 <span class="kw">impl </span>From&lt;AppDom&gt; <span class="kw">for </span>DomNeut {
     <span class="kw">fn </span>from(value: AppDom) -&gt; <span class="self">Self </span>{
-        DomNeut::App(Box::new(value))
+        <span class="self">Self</span>::App(Box::new(value))
     }
 }
 
 <span class="kw">impl </span>From&lt;Ident&gt; <span class="kw">for </span>DomNeut {
     <span class="kw">fn </span>from(value: Ident) -&gt; <span class="self">Self </span>{
-        DomNeut::Var(value)
+        <span class="self">Self</span>::Var(value)
     }
 }
 
