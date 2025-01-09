@@ -1,0 +1,27 @@
+name: Cargo-Sanity-Checks
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - '**/Cargo.lock'
+      - '**/Cargo.toml'
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - '**/Cargo.lock'
+      - '**/Cargo.toml'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Cargo Sanity Checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Cargo-deny Checks
+      uses: EmbarkStudios/cargo-deny-action@v2
+      with:
+        command: check bans licenses sources
