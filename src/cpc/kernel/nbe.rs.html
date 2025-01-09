@@ -410,7 +410,8 @@
 <a href="#409" id="409">409</a>
 <a href="#410" id="410">410</a>
 <a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a></pre></div><pre class="rust"><code><span class="attr">#![allow(rustdoc::private_intra_doc_links)]
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a></pre></div><pre class="rust"><code><span class="attr">#![allow(rustdoc::private_intra_doc_links)]
 </span><span class="doccomment">//! # Normalization Module Based on Normalization-by-Evaluation (NbE)
 //!
 //! This module provides normalization methods (`nbe` and `nbe_typ`)
@@ -764,7 +765,8 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>pi_nbe_typ_return_type0() {
-        <span class="kw">let </span>exp_str = <span class="string">"Pi (qqq : Bottom) . (fun (a : Bottom) -&gt; absurd a return (qwdwq . Univ@0)) qqq"</span>;
+        <span class="kw">let </span>exp_str =
+            <span class="string">"Pi (qqq : Bottom) . (fun (a : Bottom) -&gt; absurd a return (qwdwq . Univ@0)) qqq"</span>;
         <span class="kw">let </span>exp = parser::proper_expression(exp_str).unwrap();
         <span class="macro">insta::with_settings!</span>({
             description =&gt; exp_str,

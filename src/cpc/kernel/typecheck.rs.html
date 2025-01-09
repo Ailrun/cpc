@@ -270,14 +270,14 @@
             )
         }
         E::Pi(pi) =&gt; {
-            <span class="kw">let </span>param_lvl = infer_typ_lvl(pi.param.typ.clone(), <span class="kw-2">&amp;</span>ctx)<span class="question-mark">?</span>;
+            <span class="kw">let </span>param_lvl = infer_typ_lvl(pi.param.typ.clone(), ctx)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>newctx = ctx.clone();
             newctx.insert(pi.param.name.clone(), pi.param.typ.clone().nbe_typ(ctx));
             <span class="kw">let </span>ret_lvl = infer_typ_lvl(pi.ret_typ, <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
             EN::from(param_lvl.max(ret_lvl))
         }
         E::Fun(fun) =&gt; {
-            infer_typ_lvl(fun.param.typ.clone(), <span class="kw-2">&amp;</span>ctx)<span class="question-mark">?</span>;
+            infer_typ_lvl(fun.param.typ.clone(), ctx)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>newctx = ctx.clone();
             newctx.insert(fun.param.name.clone(), fun.param.typ.clone().nbe_typ(ctx));
             <span class="kw">let </span>ret_typ = infer(fun.body, <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
