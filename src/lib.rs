@@ -12,3 +12,6 @@ pub mod front {
     pub mod parser;
     pub mod syntax;
 }
+
+#[cfg(test)]
+pub mod testutil;

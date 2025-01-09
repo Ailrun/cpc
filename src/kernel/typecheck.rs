@@ -183,8 +183,37 @@ impl Neut {
                 self_app.fun.check_alpha_eq(other_app.fun, renaming)
                     && self_app.arg.check_alpha_eq(other_app.arg, renaming)
             }
-            (Neut::Var(self_id), Neut::Var(other_id)) => renaming.get(&self_id).unwrap_or(&self_id).eq(&other_id),
+            (Neut::Var(self_id), Neut::Var(other_id)) => {
+                renaming.get(&self_id).unwrap_or(&self_id).eq(&other_id)
+            }
             (_, _) => false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use crate::{assert_ok, front::parser, kernel::typecheck::*};
+
+    #[test]
+    fn application_type_checks0() {
+        let exp_str = "(fun (a : Univ@0) -> a) Bottom";
+        let typ_str = "Univ@0";
+        let ctx = HashMap::new();
+        let exp = parser::proper_expression(exp_str).unwrap();
+        let typ = parser::proper_expression(typ_str).unwrap().nbe_typ(&ctx);
+        assert_ok!(check(exp, typ, &ctx));
+    }
+
+    #[test]
+    fn application_type_checks1() {
+        let exp_str = "(fun (a : Pi (qwe : Univ@1) . Univ@1) -> a) (lambda (b : Univ@1) -> b)";
+        let typ_str = "Pi (d : Univ@1) . Univ@1";
+        let ctx = HashMap::new();
+        let exp = parser::proper_expression(exp_str).unwrap();
+        let typ = parser::proper_expression(typ_str).unwrap().nbe_typ(&ctx);
+        assert_ok!(check(exp, typ, &ctx));
     }
 }

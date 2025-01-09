@@ -8,7 +8,6 @@ repository = "https://github.com/Ailrun/cpc"
 license = "BSD-3-Clause-No-Military-License"
 
 [lib]
-test = false
 doctest = false
 
 [[bin]]

@@ -13,7 +13,7 @@ fn main() {
         println!("\nExit");
         exit(1)
     }
-    match parser::full_expression(s.as_str()) {
+    match parser::proper_expression(s.as_str()) {
         Ok(exp) => {
             println!("Parsed Expression: {exp:?}");
             let ctx = HashMap::new();
