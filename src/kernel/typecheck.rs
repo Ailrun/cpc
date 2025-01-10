@@ -43,7 +43,7 @@ pub fn infer(exp: Exp, ctx: &Ctx) -> Result<Norm, TypeCheckError> {
     let typ = match exp {
         E::Univ(lvl) =>
             lvl.checked_add(1).map(EN::from)
-            .ok_or(Err(TypeCheckError:: InconsistentUniverse))?,
+            .ok_or(TypeCheckError:: InconsistentUniverse)?,
         E::Bottom => EN::from(0),
         E::Absurd(absurd) => {
             check(absurd.scr.clone(), EN::Bottom, ctx)?;
