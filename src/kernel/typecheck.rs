@@ -9,7 +9,7 @@ use crate::front::syntax::*;
 use Exp as E;
 use Norm as EN;
 
-/// Possible Errors during Type Checking/Inference
+/// # Possible Errors from Type Checking/Inference
 ///
 /// TODO: Give error codes
 #[derive(Clone, Debug)]
@@ -20,8 +20,14 @@ pub enum TypeCheckError {
     NoSuchVariable(Ident, Ctx),
 }
 
+/// # Type-checking Monad
 pub type TypeCheck<T> = Result<T, TypeCheckError>;
 
+/// # Eager Substitution-Normalization for Types
+///
+/// This function allows us to substitute a variable via NbE
+/// without defining a substitution (which is cumbersome, especially
+/// in a capture-avoiding way).
 fn subst_nbe_typ(param: TypedName<Norm>, body: Typ, arg: Exp, ctx: &Ctx) -> Norm {
     let param = TypedName::from(param);
     E::from(App {
@@ -31,6 +37,7 @@ fn subst_nbe_typ(param: TypedName<Norm>, body: Typ, arg: Exp, ctx: &Ctx) -> Norm
     .nbe_typ(ctx)
 }
 
+/// # Type Inference
 pub fn infer(exp: Exp, ctx: &Ctx) -> Result<Norm, TypeCheckError> {
     let typ = match exp {
         E::Univ(lvl) => EN::from(lvl + 1),
@@ -85,6 +92,7 @@ pub fn infer(exp: Exp, ctx: &Ctx) -> Result<Norm, TypeCheckError> {
     Ok(typ)
 }
 
+/// # Universe-level Inference for Types
 pub fn infer_typ_lvl(typ: Exp, ctx: &Ctx) -> Result<Level, TypeCheckError> {
     match infer(typ, ctx)? {
         EN::Univ(lvl) => Ok(lvl),
@@ -92,18 +100,28 @@ pub fn infer_typ_lvl(typ: Exp, ctx: &Ctx) -> Result<Level, TypeCheckError> {
     }
 }
 
+/// # Type Checking
+///
+/// This function used [infer] and [check_subtyp] to
+/// typecheck. This might be less efficient for ill-typed cases,
+/// but this allows a cleaner implementation.
 pub fn check(exp: Exp, typ: Norm, ctx: &Ctx) -> Result<(), TypeCheckError> {
     let infered_typ = infer(exp, ctx)?;
-    if check_subtyp(infered_typ.clone(), typ.clone(), &HashMap::new()) {
+    if check_subtyp_nf(infered_typ.clone(), typ.clone(), &HashMap::new()) {
         Ok(())
     } else {
         Err(TypeCheckError::IncompatibleType(infered_typ, typ))
     }
 }
 
+/// # Renaming for α-Equivalence and Subtyping
 type Renaming = HashMap<String, String>;
 
-fn check_subtyp(subtyp: Norm, supertyp: Norm, renaming: &Renaming) -> bool {
+/// # Subtyping Check for Normalized Types
+///
+/// For `check_subtyp_nf(subtyp, supertyp, renaming)`, we check whether
+/// `subtyp` (after applying `renaming` on that) is a subtype of `supertyp`.
+fn check_subtyp_nf(subtyp: Norm, supertyp: Norm, renaming: &Renaming) -> bool {
     match (subtyp, supertyp) {
         (Norm::Univ(lower_lvl), Norm::Univ(higher_lvl)) => lower_lvl <= higher_lvl,
         (Norm::Pi(sub_pi), Norm::Pi(super_pi)) => {
@@ -115,7 +133,7 @@ fn check_subtyp(subtyp: Norm, supertyp: Norm, renaming: &Renaming) -> bool {
             {
                 let mut newrenaming = renaming.clone();
                 newrenaming.insert(sub_pi.param.name, super_pi.param.name);
-                check_subtyp(sub_pi.ret_typ, super_pi.ret_typ, &newrenaming)
+                check_subtyp_nf(sub_pi.ret_typ, super_pi.ret_typ, &newrenaming)
             } else {
                 false
             }
@@ -124,6 +142,7 @@ fn check_subtyp(subtyp: Norm, supertyp: Norm, renaming: &Renaming) -> bool {
     }
 }
 
+/// # α-Equivalence Checker
 impl Norm {
     fn check_alpha_eq(self, other: Self, renaming: &Renaming) -> bool {
         match (self, other) {
@@ -165,6 +184,7 @@ impl Norm {
     }
 }
 
+/// # α-Equivalence Checker
 impl Neut {
     fn check_alpha_eq(self, other: Self, renaming: &Renaming) -> bool {
         match (self, other) {
