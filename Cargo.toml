@@ -16,6 +16,7 @@ doctest = false
 
 [[bin]]
 name = "cpc"
+doc = true
 test = false
 
 [dependencies]
