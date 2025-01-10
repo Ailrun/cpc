@@ -217,7 +217,27 @@
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
 //!
 //! This module provides both type checking and inference functions
 //! based on NbE algorithm from [Module nbe](crate::kernel::nbe).
@@ -228,7 +248,7 @@
 <span class="kw">use </span>Exp <span class="kw">as </span>E;
 <span class="kw">use </span>Norm <span class="kw">as </span>EN;
 
-<span class="doccomment">/// Possible Errors during Type Checking/Inference
+<span class="doccomment">/// # Possible Errors from Type Checking/Inference
 ///
 /// TODO: Give error codes
 </span><span class="attr">#[derive(Clone, Debug)]
@@ -239,9 +259,15 @@
     NoSuchVariable(Ident, Ctx),
 }
 
-<span class="kw">pub type </span>TypeCheck&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, TypeCheckError&gt;;
+<span class="doccomment">/// # Type-checking Monad
+</span><span class="kw">pub type </span>TypeCheck&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, TypeCheckError&gt;;
 
-<span class="kw">fn </span>subst_nbe_typ(param: TypedName&lt;Norm&gt;, body: Typ, arg: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; Norm {
+<span class="doccomment">/// # Eager Substitution-Normalization for Types
+///
+/// This function allows us to substitute a variable via NbE
+/// without defining a substitution (which is cumbersome, especially
+/// in a capture-avoiding way).
+</span><span class="kw">fn </span>subst_nbe_typ(param: TypedName&lt;Norm&gt;, body: Typ, arg: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; Norm {
     <span class="kw">let </span>param = TypedName::from(param);
     E::from(App {
         fun: E::from(Fun { param, body }),
@@ -250,7 +276,8 @@
     .nbe_typ(ctx)
 }
 
-<span class="kw">pub fn </span>infer(exp: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;Norm, TypeCheckError&gt; {
+<span class="doccomment">/// # Type Inference
+</span><span class="kw">pub fn </span>infer(exp: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;Norm, TypeCheckError&gt; {
     <span class="kw">let </span>typ = <span class="kw">match </span>exp {
         E::Univ(lvl) =&gt; EN::from(lvl + <span class="number">1</span>),
         E::Bottom =&gt; EN::from(<span class="number">0</span>),
@@ -304,25 +331,36 @@
     <span class="prelude-val">Ok</span>(typ)
 }
 
-<span class="kw">pub fn </span>infer_typ_lvl(typ: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;Level, TypeCheckError&gt; {
+<span class="doccomment">/// # Universe-level Inference for Types
+</span><span class="kw">pub fn </span>infer_typ_lvl(typ: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;Level, TypeCheckError&gt; {
     <span class="kw">match </span>infer(typ, ctx)<span class="question-mark">? </span>{
         EN::Univ(lvl) =&gt; <span class="prelude-val">Ok</span>(lvl),
         ki =&gt; <span class="prelude-val">Err</span>(TypeCheckError::NonType(ki)),
     }
 }
 
-<span class="kw">pub fn </span>check(exp: Exp, typ: Norm, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;(), TypeCheckError&gt; {
+<span class="doccomment">/// # Type Checking
+///
+/// This function used [infer] and [check_subtyp] to
+/// typecheck. This might be less efficient for ill-typed cases,
+/// but this allows a cleaner implementation.
+</span><span class="kw">pub fn </span>check(exp: Exp, typ: Norm, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;(), TypeCheckError&gt; {
     <span class="kw">let </span>infered_typ = infer(exp, ctx)<span class="question-mark">?</span>;
-    <span class="kw">if </span>check_subtyp(infered_typ.clone(), typ.clone(), <span class="kw-2">&amp;</span>HashMap::new()) {
+    <span class="kw">if </span>check_subtyp_nf(infered_typ.clone(), typ.clone(), <span class="kw-2">&amp;</span>HashMap::new()) {
         <span class="prelude-val">Ok</span>(())
     } <span class="kw">else </span>{
         <span class="prelude-val">Err</span>(TypeCheckError::IncompatibleType(infered_typ, typ))
     }
 }
 
-<span class="kw">type </span>Renaming = HashMap&lt;String, String&gt;;
+<span class="doccomment">/// # Renaming for α-Equivalence and Subtyping
+</span><span class="kw">type </span>Renaming = HashMap&lt;String, String&gt;;
 
-<span class="kw">fn </span>check_subtyp(subtyp: Norm, supertyp: Norm, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
+<span class="doccomment">/// # Subtyping Check for Normalized Types
+///
+/// For `check_subtyp_nf(subtyp, supertyp, renaming)`, we check whether
+/// `subtyp` (after applying `renaming` on that) is a subtype of `supertyp`.
+</span><span class="kw">fn </span>check_subtyp_nf(subtyp: Norm, supertyp: Norm, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
     <span class="kw">match </span>(subtyp, supertyp) {
         (Norm::Univ(lower_lvl), Norm::Univ(higher_lvl)) =&gt; lower_lvl &lt;= higher_lvl,
         (Norm::Pi(sub_pi), Norm::Pi(super_pi)) =&gt; {
@@ -334,7 +372,7 @@
             {
                 <span class="kw">let </span><span class="kw-2">mut </span>newrenaming = renaming.clone();
                 newrenaming.insert(sub_pi.param.name, super_pi.param.name);
-                check_subtyp(sub_pi.ret_typ, super_pi.ret_typ, <span class="kw-2">&amp;</span>newrenaming)
+                check_subtyp_nf(sub_pi.ret_typ, super_pi.ret_typ, <span class="kw-2">&amp;</span>newrenaming)
             } <span class="kw">else </span>{
                 <span class="bool-val">false
             </span>}
@@ -343,7 +381,8 @@
     }
 }
 
-<span class="kw">impl </span>Norm {
+<span class="doccomment">/// # α-Equivalence Checker
+</span><span class="kw">impl </span>Norm {
     <span class="kw">fn </span>check_alpha_eq(<span class="self">self</span>, other: <span class="self">Self</span>, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
         <span class="kw">match </span>(<span class="self">self</span>, other) {
             (<span class="self">Self</span>::Univ(self_lvl), <span class="self">Self</span>::Univ(other_lvl)) =&gt; self_lvl == other_lvl,
@@ -384,7 +423,8 @@
     }
 }
 
-<span class="kw">impl </span>Neut {
+<span class="doccomment">/// # α-Equivalence Checker
+</span><span class="kw">impl </span>Neut {
     <span class="kw">fn </span>check_alpha_eq(<span class="self">self</span>, other: <span class="self">Self</span>, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
         <span class="kw">match </span>(<span class="self">self</span>, other) {
             (<span class="self">Self</span>::Absurd(self_absurd), <span class="self">Self</span>::Absurd(other_absurd)) =&gt; {
