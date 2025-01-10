@@ -18,6 +18,7 @@ pub enum TypeCheckError {
     NonFunction(Norm),
     IncompatibleType(Norm, Norm),
     NoSuchVariable(Ident, Ctx),
+    InconsistentUniverse,
 }
 
 /// # Type-checking Monad
@@ -40,7 +41,9 @@ fn subst_nbe_typ(param: TypedName<Norm>, body: Typ, arg: Exp, ctx: &Ctx) -> Norm
 /// # Type Inference
 pub fn infer(exp: Exp, ctx: &Ctx) -> Result<Norm, TypeCheckError> {
     let typ = match exp {
-        E::Univ(lvl) => EN::from(lvl + 1),
+        E::Univ(lvl) =>
+            lvl.checked_add(1).map(EN::from)
+            .ok_or(Err(TypeCheckError:: InconsistentUniverse))?,
         E::Bottom => EN::from(0),
         E::Absurd(absurd) => {
             check(absurd.scr.clone(), EN::Bottom, ctx)?;
@@ -102,7 +105,7 @@ pub fn infer_typ_lvl(typ: Exp, ctx: &Ctx) -> Result<Level, TypeCheckError> {
 
 /// # Type Checking
 ///
-/// This function used [infer] and [check_subtyp] to
+/// This function uses [infer] and [check_subtyp_nf] to
 /// typecheck. This might be less efficient for ill-typed cases,
 /// but this allows a cleaner implementation.
 pub fn check(exp: Exp, typ: Norm, ctx: &Ctx) -> Result<(), TypeCheckError> {
