@@ -5,6 +5,7 @@
 //! - [proper_expression]
 use nom::{error::Error, Finish, Parser};
 
+#[doc(hidden)]
 mod base;
 mod combinators;
 #[cfg(test)]
