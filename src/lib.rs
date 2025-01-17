@@ -10,6 +10,7 @@ pub mod kernel {
 /// # Frontend of CPC
 pub mod front {
     pub mod parser;
+    pub mod pretty;
     pub mod syntax;
 }
 
