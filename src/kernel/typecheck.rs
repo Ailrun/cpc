@@ -234,8 +234,8 @@ mod tests {
 
     #[test]
     fn application_type_checks1() {
-        let exp_str = "(fun (adqwdjlwkqdjlwqjdlwqjldkqwqdqwodywoidyoiwqyd : Pi (qwe : Univ@1) . Univ@1) -> a) (lambda (b : Univ@1) -> b)";
-        let typ_str = "Pi (d : Univ@1) . Univ@0";
+        let exp_str = "(fun (a : Pi (qwe : Univ@1) . Univ@1) -> a) (lambda (b : Univ@1) -> b)";
+        let typ_str = "Pi (d : Univ@1) . Univ@1";
         let ctx = HashMap::new();
         let exp = parser::proper_expression(exp_str).unwrap();
         let typ = parser::proper_expression(typ_str).unwrap().nbe_typ(&ctx);
