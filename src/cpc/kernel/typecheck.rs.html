@@ -426,7 +426,7 @@
                 </span>}
             }
             (<span class="self">Self</span>::Neut(self_neut), <span class="self">Self</span>::Neut(other_neut)) =&gt; {
-                self_neut.check_alpha_eq(<span class="kw-2">&amp;</span>other_neut, renaming)
+                self_neut.check_alpha_eq(other_neut, renaming)
             }
             (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
         }

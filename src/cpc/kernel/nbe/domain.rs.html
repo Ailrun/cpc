@@ -187,7 +187,7 @@
 // Conversions
 ////////////////////////////////////////////////////////////
 
-</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; From&lt;Level&gt; <span class="kw">for </span>Dom&lt;<span class="lifetime">'a</span>&gt; {
+</span><span class="kw">impl </span>From&lt;Level&gt; <span class="kw">for </span>Dom&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>from(value: Level) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Univ(value)
     }

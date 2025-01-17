@@ -238,7 +238,7 @@
     }
 
     <span class="kw">fn </span>nbe_typ_env(<span class="kw-2">&amp;</span><span class="self">self</span>, env: <span class="kw-2">&amp;</span>Env) -&gt; Norm {
-        <span class="self">self</span>.eval(<span class="kw-2">&amp;</span>env).readback_typ(<span class="kw-2">&amp;mut </span>env_into_idents(env))
+        <span class="self">self</span>.eval(env).readback_typ(<span class="kw-2">&amp;mut </span>env_into_idents(env))
     }
 }
 
