@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["TypeCheckError"],"fn":["check","check_subtyp_nf","infer","infer_typ_lvl","subst_nbe_typ"],"type":["Renaming","TypeCheck"]};
+window.SIDEBAR_ITEMS = {"enum":["TypeCheckError"],"fn":["check","check_subtyp_nf","closed_check","closed_infer","closed_infer_typ_lvl","infer","infer_typ_lvl"],"trait":["AlphaEq"],"type":["Renaming","TypeCheck"]};

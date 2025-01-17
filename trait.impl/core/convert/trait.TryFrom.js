@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["cpc",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/convert/trait.TryFrom.html\" title=\"trait core::convert::TryFrom\">TryFrom</a>&lt;<a class=\"enum\" href=\"cpc/kernel/domain/enum.Dom.html\" title=\"enum cpc::kernel::domain::Dom\">Dom</a>&gt; for <a class=\"enum\" href=\"cpc/kernel/domain/enum.DomNeut.html\" title=\"enum cpc::kernel::domain::DomNeut\">DomNeut</a>"]]],["serde",[]]]);
+    var implementors = Object.fromEntries([["arrayvec",[["impl&lt;A: <a class=\"trait\" href=\"arrayvec/array/trait.Array.html\" title=\"trait arrayvec::array::Array\">Array</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/convert/trait.TryFrom.html\" title=\"trait core::convert::TryFrom\">TryFrom</a>&lt;&amp;[&lt;A as <a class=\"trait\" href=\"arrayvec/array/trait.Array.html\" title=\"trait arrayvec::array::Array\">Array</a>&gt;::<a class=\"associatedtype\" href=\"arrayvec/array/trait.Array.html#associatedtype.Item\" title=\"type arrayvec::array::Array::Item\">Item</a>]&gt; for <a class=\"struct\" href=\"arrayvec/struct.ArrayVec.html\" title=\"struct arrayvec::ArrayVec\">ArrayVec</a>&lt;A&gt;<div class=\"where\">where\n    A::<a class=\"associatedtype\" href=\"arrayvec/array/trait.Array.html#associatedtype.Item\" title=\"type arrayvec::array::Array::Item\">Item</a>: <a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a>,</div>"]]],["cpc",[["impl&lt;'a&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/convert/trait.TryFrom.html\" title=\"trait core::convert::TryFrom\">TryFrom</a>&lt;<a class=\"enum\" href=\"cpc/kernel/nbe/domain/enum.Dom.html\" title=\"enum cpc::kernel::nbe::domain::Dom\">Dom</a>&lt;'a&gt;&gt; for <a class=\"enum\" href=\"cpc/kernel/nbe/domain/enum.DomNeut.html\" title=\"enum cpc::kernel::nbe::domain::DomNeut\">DomNeut</a>&lt;'a&gt;"]]],["serde",[]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[399,13]}
+//{"start":57,"fragment_lengths":[1004,448,13]}

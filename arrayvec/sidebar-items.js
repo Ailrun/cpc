@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["raw_ptr_add","raw_ptr_write"],"macro":["panic_oob"],"mod":["array","array_string","char","errors","maybe_uninit"],"struct":["ArrayString","ArrayVec","CapacityError","Drain","IntoIter","ScopeExitGuard"],"trait":["Array"]};

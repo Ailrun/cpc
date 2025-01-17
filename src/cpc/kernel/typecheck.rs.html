@@ -240,13 +240,15 @@
 <a href="#239" id="239">239</a>
 <a href="#240" id="240">240</a>
 <a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Type Checking/Inference Implementation
 //!
 //! This module provides both type checking and inference functions
 //! based on NbE algorithm from [Module nbe](crate::kernel::nbe).
 </span><span class="kw">use </span>std::collections::HashMap;
 
-<span class="kw">use </span><span class="kw">crate</span>::front::syntax::<span class="kw-2">*</span>;
+<span class="kw">use crate</span>::{front::syntax::<span class="kw-2">*</span>, kernel::nbe::<span class="kw-2">*</span>};
 
 <span class="kw">use </span>Exp <span class="kw">as </span>E;
 <span class="kw">use </span>Norm <span class="kw">as </span>EN;
@@ -255,104 +257,101 @@
 ///
 /// TODO: Give error codes
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub enum </span>TypeCheckError {
+</span><span class="kw">pub enum </span>TypeCheckError&lt;<span class="lifetime">'a</span>&gt; {
     NonType(Norm),
     NonFunction(Norm),
     IncompatibleType(Norm, Norm),
-    NoSuchVariable(Ident, Ctx),
+    NoSuchVariable(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Ident, Ctx&lt;<span class="lifetime">'a</span>&gt;),
     InconsistentUniverse,
 }
 
 <span class="doccomment">/// # Type-checking Monad
-</span><span class="kw">pub type </span>TypeCheck&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, TypeCheckError&gt;;
+</span><span class="kw">pub type </span>TypeCheck&lt;<span class="lifetime">'a</span>, T&gt; = <span class="prelude-ty">Result</span>&lt;T, TypeCheckError&lt;<span class="lifetime">'a</span>&gt;&gt;;
 
-<span class="doccomment">/// # Eager Substitution-Normalization for Types
-///
-/// This function allows us to substitute a variable via NbE
-/// without defining a substitution (which is cumbersome, especially
-/// in a capture-avoiding way).
-</span><span class="kw">fn </span>subst_nbe_typ(param: TypedName&lt;Norm&gt;, body: Typ, arg: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; Norm {
-    <span class="kw">let </span>param = TypedName::from(param);
-    E::from(App {
-        fun: E::from(Fun { param, body }),
-        arg,
-    })
-    .nbe_typ(ctx)
+<span class="doccomment">/// # Type Inference for Closed Expression
+</span><span class="kw">pub fn </span>closed_infer(exp: <span class="kw-2">&amp;</span>Exp) -&gt; TypeCheck&lt;Norm&gt; {
+    <span class="kw">let </span>ctx = HashMap::new();
+    infer(exp, <span class="kw-2">&amp;</span>ctx)
 }
 
-<span class="doccomment">/// # Type Inference
-</span><span class="kw">pub fn </span>infer(exp: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;Norm, TypeCheckError&gt; {
+<span class="doccomment">/// # Universe-level Inference for Closed Types
+</span><span class="kw">pub fn </span>closed_infer_typ_lvl(typ: <span class="kw-2">&amp;</span>Exp) -&gt; TypeCheck&lt;Level&gt; {
+    <span class="kw">let </span>ctx = HashMap::new();
+    infer_typ_lvl(typ, <span class="kw-2">&amp;</span>ctx)
+}
+
+<span class="doccomment">/// # Type Checking for Closed Expression
+</span><span class="kw">pub fn </span>closed_check(exp: <span class="kw-2">&amp;</span>Exp, typ: Norm) -&gt; TypeCheck&lt;()&gt; {
+    <span class="kw">let </span>ctx = HashMap::new();
+    check(exp, typ, <span class="kw-2">&amp;</span>ctx)
+}
+
+<span class="doccomment">/// # Type Inference for General (Possibly Open) Expression
+</span><span class="kw">pub fn </span>infer&lt;<span class="lifetime">'a</span>&gt;(exp: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Exp, ctx: <span class="kw-2">&amp;</span>Ctx&lt;<span class="lifetime">'a</span>&gt;) -&gt; TypeCheck&lt;<span class="lifetime">'a</span>, Norm&gt; {
     <span class="kw">let </span>typ = <span class="kw">match </span>exp {
-        E::Univ(lvl) =&gt;
-            lvl.checked_add(<span class="number">1</span>).map(EN::from)
-            .ok_or(TypeCheckError:: InconsistentUniverse)<span class="question-mark">?</span>,
+        E::Univ(lvl) =&gt; lvl
+            .checked_add(<span class="number">1</span>)
+            .map(EN::from)
+            .ok_or(TypeCheckError::InconsistentUniverse)<span class="question-mark">?</span>,
         E::Bottom =&gt; EN::from(<span class="number">0</span>),
         E::Absurd(absurd) =&gt; {
-            check(absurd.scr.clone(), EN::Bottom, ctx)<span class="question-mark">?</span>;
+            check(<span class="kw-2">&amp;</span>absurd.scr, EN::Bottom, ctx)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>newctx = ctx.clone();
-            newctx.insert(absurd.motive_param.clone(), EN::Bottom);
-            infer_typ_lvl(absurd.motive_body.clone(), <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
-            subst_nbe_typ(
-                TypedName {
-                    name: absurd.motive_param,
-                    typ: EN::Bottom,
-                },
-                absurd.motive_body,
-                absurd.scr,
-                ctx,
-            )
+            newctx.insert(<span class="kw-2">&amp;</span>absurd.motive_param, <span class="kw-2">&amp;</span>E::BOTTOM);
+            infer_typ_lvl(<span class="kw-2">&amp;</span>absurd.motive_body, <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
+            subst_nbe_typ(<span class="kw-2">&amp;</span>absurd.motive_param, <span class="kw-2">&amp;</span>absurd.motive_body, <span class="kw-2">&amp;</span>absurd.scr, ctx)
         }
         E::Pi(pi) =&gt; {
-            <span class="kw">let </span>param_lvl = infer_typ_lvl(pi.param.typ.clone(), ctx)<span class="question-mark">?</span>;
+            <span class="kw">let </span>param_lvl = infer_typ_lvl(<span class="kw-2">&amp;</span>pi.param.typ, ctx)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>newctx = ctx.clone();
-            newctx.insert(pi.param.name.clone(), pi.param.typ.clone().nbe_typ(ctx));
-            <span class="kw">let </span>ret_lvl = infer_typ_lvl(pi.ret_typ, <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
+            newctx.insert(<span class="kw-2">&amp;</span>pi.param.name, <span class="kw-2">&amp;</span>pi.param.typ);
+            <span class="kw">let </span>ret_lvl = infer_typ_lvl(<span class="kw-2">&amp;</span>pi.ret_typ, <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
             EN::from(param_lvl.max(ret_lvl))
         }
         E::Fun(fun) =&gt; {
-            infer_typ_lvl(fun.param.typ.clone(), ctx)<span class="question-mark">?</span>;
+            infer_typ_lvl(<span class="kw-2">&amp;</span>fun.param.typ, ctx)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>newctx = ctx.clone();
-            newctx.insert(fun.param.name.clone(), fun.param.typ.clone().nbe_typ(ctx));
-            <span class="kw">let </span>ret_typ = infer(fun.body, <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
+            newctx.insert(<span class="kw-2">&amp;</span>fun.param.name, <span class="kw-2">&amp;</span>fun.param.typ);
+            <span class="kw">let </span>ret_typ = infer(<span class="kw-2">&amp;</span>fun.body, <span class="kw-2">&amp;</span>newctx)<span class="question-mark">?</span>;
             EN::from(Pi {
                 param: TypedName {
-                    name: fun.param.name,
+                    name: fun.param.name.clone(),
                     typ: fun.param.typ.nbe_typ(ctx),
                 },
                 ret_typ,
             })
         }
-        E::App(app) =&gt; <span class="kw">match </span>infer(app.fun, ctx)<span class="question-mark">? </span>{
+        E::App(app) =&gt; <span class="kw">match </span>infer(<span class="kw-2">&amp;</span>app.fun, ctx)<span class="question-mark">? </span>{
             EN::Pi(pi) =&gt; {
-                check(app.arg.clone(), pi.param.typ.clone(), ctx)<span class="question-mark">?</span>;
-                subst_nbe_typ(pi.param, From::from(pi.ret_typ), app.arg, ctx)
+                check(<span class="kw-2">&amp;</span>app.arg, pi.param.typ, ctx)<span class="question-mark">?</span>;
+                subst_nbe_typ(<span class="kw-2">&amp;</span>pi.param.name, <span class="kw-2">&amp;</span>From::from(pi.ret_typ), <span class="kw-2">&amp;</span>app.arg, ctx)
             }
             fun_typ =&gt; <span class="prelude-val">Err</span>(TypeCheckError::NonFunction(fun_typ))<span class="question-mark">?</span>,
         },
-        E::Var(id) =&gt; <span class="kw">match </span>ctx.get(<span class="kw-2">&amp;</span>id) {
-            <span class="prelude-val">Some</span>(typ) =&gt; typ.clone(),
+        E::Var(id) =&gt; <span class="kw">match </span>ctx.get(id) {
+            <span class="prelude-val">Some</span>(typ) =&gt; typ.nbe_typ(ctx),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(TypeCheckError::NoSuchVariable(id, ctx.clone()))<span class="question-mark">?</span>,
         },
     };
     <span class="prelude-val">Ok</span>(typ)
 }
 
-<span class="doccomment">/// # Universe-level Inference for Types
-</span><span class="kw">pub fn </span>infer_typ_lvl(typ: Exp, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;Level, TypeCheckError&gt; {
+<span class="doccomment">/// # Universe-level Inference for General (Possibly Open) Types
+</span><span class="kw">pub fn </span>infer_typ_lvl&lt;<span class="lifetime">'a</span>&gt;(typ: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Exp, ctx: <span class="kw-2">&amp;</span>Ctx&lt;<span class="lifetime">'a</span>&gt;) -&gt; TypeCheck&lt;<span class="lifetime">'a</span>, Level&gt; {
     <span class="kw">match </span>infer(typ, ctx)<span class="question-mark">? </span>{
         EN::Univ(lvl) =&gt; <span class="prelude-val">Ok</span>(lvl),
         ki =&gt; <span class="prelude-val">Err</span>(TypeCheckError::NonType(ki)),
     }
 }
 
-<span class="doccomment">/// # Type Checking
+<span class="doccomment">/// # Type Checking for General (Possibly Open) Expressions
 ///
 /// This function uses [infer] and [check_subtyp_nf] to
 /// typecheck. This might be less efficient for ill-typed cases,
 /// but this allows a cleaner implementation.
-</span><span class="kw">pub fn </span>check(exp: Exp, typ: Norm, ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; <span class="prelude-ty">Result</span>&lt;(), TypeCheckError&gt; {
+</span><span class="kw">pub fn </span>check&lt;<span class="lifetime">'a</span>&gt;(exp: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Exp, typ: Norm, ctx: <span class="kw-2">&amp;</span>Ctx&lt;<span class="lifetime">'a</span>&gt;) -&gt; TypeCheck&lt;<span class="lifetime">'a</span>, ()&gt; {
     <span class="kw">let </span>infered_typ = infer(exp, ctx)<span class="question-mark">?</span>;
-    <span class="kw">if </span>check_subtyp_nf(infered_typ.clone(), typ.clone(), <span class="kw-2">&amp;</span>HashMap::new()) {
+    <span class="kw">if </span>check_subtyp_nf(<span class="kw-2">&amp;</span>infered_typ, <span class="kw-2">&amp;</span>typ, <span class="kw-2">&amp;</span>HashMap::new()) {
         <span class="prelude-val">Ok</span>(())
     } <span class="kw">else </span>{
         <span class="prelude-val">Err</span>(TypeCheckError::IncompatibleType(infered_typ, typ))
@@ -360,13 +359,13 @@
 }
 
 <span class="doccomment">/// # Renaming for α-Equivalence and Subtyping
-</span><span class="kw">type </span>Renaming = HashMap&lt;String, String&gt;;
+</span><span class="kw">type </span>Renaming&lt;<span class="lifetime">'a</span>&gt; = HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Ident, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Ident&gt;;
 
 <span class="doccomment">/// # Subtyping Check for Normalized Types
 ///
 /// For `check_subtyp_nf(subtyp, supertyp, renaming)`, we check whether
 /// `subtyp` (after applying `renaming` on that) is a subtype of `supertyp`.
-</span><span class="kw">fn </span>check_subtyp_nf(subtyp: Norm, supertyp: Norm, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
+</span><span class="kw">fn </span>check_subtyp_nf&lt;<span class="lifetime">'a</span>&gt;(subtyp: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Norm, supertyp: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Norm, renaming: <span class="kw-2">&amp;</span>Renaming&lt;<span class="lifetime">'a</span>&gt;) -&gt; bool {
     <span class="kw">match </span>(subtyp, supertyp) {
         (Norm::Univ(lower_lvl), Norm::Univ(higher_lvl)) =&gt; lower_lvl &lt;= higher_lvl,
         (Norm::Pi(sub_pi), Norm::Pi(super_pi)) =&gt; {
@@ -374,11 +373,11 @@
             </span><span class="kw">if </span>sub_pi
                 .param
                 .typ
-                .check_alpha_eq(super_pi.param.typ, renaming)
+                .check_alpha_eq(<span class="kw-2">&amp;</span>super_pi.param.typ, renaming)
             {
                 <span class="kw">let </span><span class="kw-2">mut </span>newrenaming = renaming.clone();
-                newrenaming.insert(sub_pi.param.name, super_pi.param.name);
-                check_subtyp_nf(sub_pi.ret_typ, super_pi.ret_typ, <span class="kw-2">&amp;</span>newrenaming)
+                newrenaming.insert(<span class="kw-2">&amp;</span>sub_pi.param.name, <span class="kw-2">&amp;</span>super_pi.param.name);
+                check_subtyp_nf(<span class="kw-2">&amp;</span>sub_pi.ret_typ, <span class="kw-2">&amp;</span>super_pi.ret_typ, <span class="kw-2">&amp;</span>newrenaming)
             } <span class="kw">else </span>{
                 <span class="bool-val">false
             </span>}
@@ -388,8 +387,13 @@
 }
 
 <span class="doccomment">/// # α-Equivalence Checker
-</span><span class="kw">impl </span>Norm {
-    <span class="kw">fn </span>check_alpha_eq(<span class="self">self</span>, other: <span class="self">Self</span>, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
+</span><span class="kw">trait </span>AlphaEq {
+    <span class="kw">fn </span>check_alpha_eq&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>, renaming: <span class="kw-2">&amp;</span>Renaming&lt;<span class="lifetime">'a</span>&gt;) -&gt; bool;
+}
+
+<span class="doccomment">/// # α-Equivalence Checker for [Norm]
+</span><span class="kw">impl </span>AlphaEq <span class="kw">for </span>Norm {
+    <span class="kw">fn </span>check_alpha_eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
         <span class="kw">match </span>(<span class="self">self</span>, other) {
             (<span class="self">Self</span>::Univ(self_lvl), <span class="self">Self</span>::Univ(other_lvl)) =&gt; self_lvl == other_lvl,
             (<span class="self">Self</span>::Bottom, <span class="self">Self</span>::Bottom) =&gt; <span class="bool-val">true</span>,
@@ -397,13 +401,13 @@
                 <span class="kw">if </span>self_pi
                     .param
                     .typ
-                    .check_alpha_eq(other_pi.param.typ, renaming)
+                    .check_alpha_eq(<span class="kw-2">&amp;</span>other_pi.param.typ, renaming)
                 {
                     <span class="kw">let </span><span class="kw-2">mut </span>newrenaming = renaming.clone();
-                    newrenaming.insert(self_pi.param.name, other_pi.param.name);
+                    newrenaming.insert(<span class="kw-2">&amp;</span>self_pi.param.name, <span class="kw-2">&amp;</span>other_pi.param.name);
                     self_pi
                         .ret_typ
-                        .check_alpha_eq(other_pi.ret_typ, <span class="kw-2">&amp;</span>newrenaming)
+                        .check_alpha_eq(<span class="kw-2">&amp;</span>other_pi.ret_typ, <span class="kw-2">&amp;</span>newrenaming)
                 } <span class="kw">else </span>{
                     <span class="bool-val">false
                 </span>}
@@ -412,44 +416,44 @@
                 <span class="kw">if </span>self_fun
                     .param
                     .typ
-                    .check_alpha_eq(other_fun.param.typ, renaming)
+                    .check_alpha_eq(<span class="kw-2">&amp;</span>other_fun.param.typ, renaming)
                 {
                     <span class="kw">let </span><span class="kw-2">mut </span>newrenaming = renaming.clone();
-                    newrenaming.insert(self_fun.param.name, other_fun.param.name);
-                    self_fun.body.check_alpha_eq(other_fun.body, <span class="kw-2">&amp;</span>newrenaming)
+                    newrenaming.insert(<span class="kw-2">&amp;</span>self_fun.param.name, <span class="kw-2">&amp;</span>other_fun.param.name);
+                    self_fun.body.check_alpha_eq(<span class="kw-2">&amp;</span>other_fun.body, <span class="kw-2">&amp;</span>newrenaming)
                 } <span class="kw">else </span>{
                     <span class="bool-val">false
                 </span>}
             }
             (<span class="self">Self</span>::Neut(self_neut), <span class="self">Self</span>::Neut(other_neut)) =&gt; {
-                self_neut.check_alpha_eq(other_neut, renaming)
+                self_neut.check_alpha_eq(<span class="kw-2">&amp;</span>other_neut, renaming)
             }
             (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
         }
     }
 }
 
-<span class="doccomment">/// # α-Equivalence Checker
-</span><span class="kw">impl </span>Neut {
-    <span class="kw">fn </span>check_alpha_eq(<span class="self">self</span>, other: <span class="self">Self</span>, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
+<span class="doccomment">/// # α-Equivalence Checker for [Neut]
+</span><span class="kw">impl </span>AlphaEq <span class="kw">for </span>Neut {
+    <span class="kw">fn </span>check_alpha_eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>, renaming: <span class="kw-2">&amp;</span>Renaming) -&gt; bool {
         <span class="kw">match </span>(<span class="self">self</span>, other) {
             (<span class="self">Self</span>::Absurd(self_absurd), <span class="self">Self</span>::Absurd(other_absurd)) =&gt; {
-                <span class="kw">if </span>self_absurd.scr.check_alpha_eq(other_absurd.scr, renaming) {
+                <span class="kw">if </span>self_absurd.scr.check_alpha_eq(<span class="kw-2">&amp;</span>other_absurd.scr, renaming) {
                     <span class="kw">let </span><span class="kw-2">mut </span>newrenaming = renaming.clone();
-                    newrenaming.insert(self_absurd.motive_param, other_absurd.motive_param);
+                    newrenaming.insert(<span class="kw-2">&amp;</span>self_absurd.motive_param, <span class="kw-2">&amp;</span>other_absurd.motive_param);
                     self_absurd
                         .motive_body
-                        .check_alpha_eq(other_absurd.motive_body, <span class="kw-2">&amp;</span>newrenaming)
+                        .check_alpha_eq(<span class="kw-2">&amp;</span>other_absurd.motive_body, <span class="kw-2">&amp;</span>newrenaming)
                 } <span class="kw">else </span>{
                     <span class="bool-val">false
                 </span>}
             }
             (<span class="self">Self</span>::App(self_app), <span class="self">Self</span>::App(other_app)) =&gt; {
-                self_app.fun.check_alpha_eq(other_app.fun, renaming)
-                    &amp;&amp; self_app.arg.check_alpha_eq(other_app.arg, renaming)
+                self_app.fun.check_alpha_eq(<span class="kw-2">&amp;</span>other_app.fun, renaming)
+                    &amp;&amp; self_app.arg.check_alpha_eq(<span class="kw-2">&amp;</span>other_app.arg, renaming)
             }
             (<span class="self">Self</span>::Var(self_id), <span class="self">Self</span>::Var(other_id)) =&gt; {
-                renaming.get(<span class="kw-2">&amp;</span>self_id).unwrap_or(<span class="kw-2">&amp;</span>self_id).eq(<span class="kw-2">&amp;</span>other_id)
+                (<span class="kw-2">*</span>renaming.get(self_id).unwrap_or(<span class="kw-2">&amp;</span>self_id)).eq(other_id)
             }
             (<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
         }
@@ -469,7 +473,7 @@
         <span class="kw">let </span>ctx = HashMap::new();
         <span class="kw">let </span>exp = parser::proper_expression(exp_str).unwrap();
         <span class="kw">let </span>typ = parser::proper_expression(typ_str).unwrap().nbe_typ(<span class="kw-2">&amp;</span>ctx);
-        <span class="macro">assert_ok!</span>(check(exp, typ, <span class="kw-2">&amp;</span>ctx));
+        <span class="macro">assert_ok!</span>(check(<span class="kw-2">&amp;</span>exp, typ.clone(), <span class="kw-2">&amp;</span>ctx));
     }
 
     <span class="attr">#[test]
@@ -479,7 +483,7 @@
         <span class="kw">let </span>ctx = HashMap::new();
         <span class="kw">let </span>exp = parser::proper_expression(exp_str).unwrap();
         <span class="kw">let </span>typ = parser::proper_expression(typ_str).unwrap().nbe_typ(<span class="kw-2">&amp;</span>ctx);
-        <span class="macro">assert_ok!</span>(check(exp, typ, <span class="kw-2">&amp;</span>ctx));
+        <span class="macro">assert_ok!</span>(check(<span class="kw-2">&amp;</span>exp, typ.clone(), <span class="kw-2">&amp;</span>ctx));
     }
 }
 </code></pre></div></section></main></body></html>

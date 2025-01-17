@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["parser","syntax"]};
+window.SIDEBAR_ITEMS = {"mod":["parser","pretty","syntax"]};

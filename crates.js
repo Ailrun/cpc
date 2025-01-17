@@ -1,2 +1,2 @@
-window.ALL_CRATES = ["cpc","memchr","minimal_lexical","nom","proc_macro2","quote","serde","serde_derive","syn","unicode_ident"];
-//{"start":21,"fragment_lengths":[5,9,18,6,14,8,8,15,6,16]}
+window.ALL_CRATES = ["arrayvec","cpc","memchr","minimal_lexical","nom","pretty","proc_macro2","quote","serde","serde_derive","syn","typed_arena","unicode_ident","unicode_width"];
+//{"start":21,"fragment_lengths":[10,6,9,18,6,9,14,8,8,15,6,14,16,16]}

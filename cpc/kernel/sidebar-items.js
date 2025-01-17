@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["domain","nbe","typecheck"]};
+window.SIDEBAR_ITEMS = {"mod":["nbe","typecheck"]};
