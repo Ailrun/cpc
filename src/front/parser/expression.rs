@@ -97,14 +97,14 @@ where
     T2: Parser<CpcInput<'a>, O2, CpcError<'a>>,
     F: Fn(TypedName<Typ>, Exp) -> Exp,
 {
-    tuple((binder_keyword, many1(parameter), body_separator, expression))
-        .map(move |(_, params, _, body)| {
-            let mut res = body;
+    tuple((binder_keyword, many1(parameter), body_separator, expression)).map(
+        move |(_, params, _, mut body)| {
             for param in params {
-                res = f(param, res);
+                body = f(param, body);
             }
-            res
-        })
+            body
+        },
+    )
 }
 
 /// # Parameter Parser

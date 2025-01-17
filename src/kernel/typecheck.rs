@@ -182,7 +182,7 @@ impl AlphaEq for Norm {
                 }
             }
             (Self::Neut(self_neut), Self::Neut(other_neut)) => {
-                self_neut.check_alpha_eq(&other_neut, renaming)
+                self_neut.check_alpha_eq(other_neut, renaming)
             }
             (_, _) => false,
         }

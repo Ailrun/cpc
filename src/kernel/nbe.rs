@@ -38,7 +38,7 @@ impl Exp {
     }
 
     fn nbe_typ_env(&self, env: &Env) -> Norm {
-        self.eval(&env).readback_typ(&mut env_into_idents(env))
+        self.eval(env).readback_typ(&mut env_into_idents(env))
     }
 }
 

@@ -30,11 +30,11 @@ impl Eval for Exp {
                     let motive_body_exp = &absurd_exp.motive_body;
 
                     let prev_entry =
-                        motive_body_env.insert(&motive_param, Dom::from((scr_typ, scr.clone())));
+                        motive_body_env.insert(motive_param, Dom::from((scr_typ, scr.clone())));
                     let dom_typ = motive_body_exp.eval(&motive_body_env);
                     match prev_entry {
-                        Some(value) => motive_body_env.insert(&motive_param, value),
-                        None => motive_body_env.remove(&motive_param),
+                        Some(value) => motive_body_env.insert(motive_param, value),
+                        None => motive_body_env.remove(motive_param),
                     };
 
                     Dom::from((

@@ -66,7 +66,7 @@ pub struct AppDom<'a> {
 // Conversions
 ////////////////////////////////////////////////////////////
 
-impl<'a> From<Level> for Dom<'a> {
+impl From<Level> for Dom<'_> {
     fn from(value: Level) -> Self {
         Self::Univ(value)
     }
