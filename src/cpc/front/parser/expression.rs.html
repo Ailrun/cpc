@@ -109,7 +109,13 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Expression Parsers of CPC
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Expression Parsers of CPC
 //!
 //! This module provides the following parsers:
 //! - [expression]
@@ -120,7 +126,7 @@
 //! - [atomic_expression]
 //! - [binder_expression]
 //! - [parameter]
-</span><span class="kw">use </span>nom::{branch::<span class="kw-2">*</span>, combinator::<span class="kw-2">*</span>, sequence::<span class="kw-2">*</span>, Parser};
+</span><span class="kw">use </span>nom::{branch::<span class="kw-2">*</span>, combinator::<span class="kw-2">*</span>, multi::<span class="kw-2">*</span>, sequence::<span class="kw-2">*</span>, Parser};
 
 <span class="kw">use </span><span class="kw">super</span>::base::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">super</span>::combinators::<span class="kw-2">*</span>;
@@ -208,8 +214,14 @@
     T2: Parser&lt;CpcInput&lt;<span class="lifetime">'a</span>&gt;, O2, CpcError&lt;<span class="lifetime">'a</span>&gt;&gt;,
     F: Fn(TypedName&lt;Typ&gt;, Exp) -&gt; Exp,
 {
-    tuple((binder_keyword, parameter, body_separator, expression))
-        .map(<span class="kw">move </span>|(<span class="kw">_</span>, param, <span class="kw">_</span>, body)| f(param, body))
+    tuple((binder_keyword, many1(parameter), body_separator, expression))
+        .map(<span class="kw">move </span>|(<span class="kw">_</span>, params, <span class="kw">_</span>, body)| {
+            <span class="kw">let </span><span class="kw-2">mut </span>res = body;
+            <span class="kw">for </span>param <span class="kw">in </span>params {
+                res = f(param, res);
+            }
+            res
+        })
 }
 
 <span class="doccomment">/// # Parameter Parser
