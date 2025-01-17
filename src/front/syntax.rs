@@ -42,13 +42,17 @@ pub enum Exp {
     Var(Ident),
 }
 
+impl Exp {
+    pub const BOTTOM: Exp = Exp::Bottom;
+}
+
 /// Type as an Expression
 ///
 /// In a dependently-typed world, expression can also be a type.
 pub type Typ = Exp;
 
 /// Context
-pub type Ctx = HashMap<Ident, Norm>;
+pub type Ctx<'a> = HashMap<&'a Ident, &'a Typ>;
 
 /// # AST for Normal Expression
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]

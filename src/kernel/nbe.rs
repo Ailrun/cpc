@@ -10,272 +10,61 @@
 //! Specifically, one can check its [nbe method](Exp::nbe) and [eval method](Exp::eval).
 use std::collections::HashMap;
 
-use crate::{front::syntax::*, kernel::domain::*};
+mod domain;
+mod evaluation;
+mod panic;
+mod readback;
 
-/// ## Main Functions for Normalization-by-Evaluation
+use domain::*;
+use evaluation::*;
+use readback::*;
+
+use crate::front::syntax::*;
+
+/// # Main Functions for Normalization-by-Evaluation
 impl Exp {
-    pub fn nbe(self, typ: Self, ctx: &Ctx) -> Norm {
+    pub fn nbe(&self, typ: &Self, ctx: &Ctx) -> Norm {
         let env = build_initial_env(ctx);
         DomNorm {
             typ: typ.eval(&env),
             dom: self.eval(&env),
         }
-        .readback(&mut env.into_keys().collect())
+        .readback(&mut env_into_idents(&env))
     }
 
-    pub fn nbe_typ(self, ctx: &Ctx) -> Norm {
+    pub fn nbe_typ(&self, ctx: &Ctx) -> Norm {
         let env = build_initial_env(ctx);
-        self.eval(&env).readback_typ(&mut env.into_keys().collect())
+        self.nbe_typ_env(&env)
+    }
+
+    fn nbe_typ_env(&self, env: &Env) -> Norm {
+        self.eval(&env).readback_typ(&mut env_into_idents(env))
     }
 }
 
-fn build_initial_env(ctx: &Ctx) -> Env {
+/// # Eager Substitution-Normalization for Types
+///
+/// This function allows us to substitute a variable via NbE
+/// without defining a substitution (which is cumbersome, especially
+/// in a capture-avoiding way).
+pub fn subst_nbe_typ(param_name: &Ident, body: &Typ, arg: &Exp, ctx: &Ctx) -> Norm {
+    let mut env = build_initial_env(ctx);
+    let arg_dom = arg.eval(&env);
+    env.insert(param_name, arg_dom);
+    body.nbe_typ_env(&env)
+}
+
+fn build_initial_env<'a>(ctx: &'a Ctx) -> Env<'a> {
     let mut env = HashMap::new();
     for (var, var_typ) in ctx {
-        let var_typ_dom = Exp::from(var_typ.clone()).eval(&env);
-        env.insert(var.clone(), Dom::from((var_typ_dom, var.clone())));
+        let var_typ_dom: Dom<'a> = var_typ.eval(&env);
+        env.insert(*var, Dom::from((var_typ_dom, *var)));
     }
     env
 }
 
-/// ## Evaluation into Domain
-impl Exp {
-    fn eval(self, env: &Env) -> Dom {
-        match self {
-            Self::Univ(lvl) => Dom::from(lvl),
-            Self::Bottom => Dom::Bottom,
-            Self::Absurd(absurd_exp) => match absurd_exp.scr.eval(env) {
-                Dom::Neut(scr_typ, scr) => {
-                    let motive_param = absurd_exp.motive_param;
-                    let mut motive_body_env = env.clone();
-                    let motive_body_exp = absurd_exp.motive_body;
-
-                    let prev_entry = motive_body_env
-                        .insert(motive_param.clone(), Dom::from((scr_typ, scr.clone())));
-                    let dom_typ = motive_body_exp.clone().eval(&motive_body_env);
-                    match prev_entry {
-                        Some(value) => motive_body_env.insert(motive_param.clone(), value),
-                        None => motive_body_env.remove(&motive_param),
-                    };
-
-                    Dom::from((
-                        dom_typ,
-                        AbsurdDom {
-                            scr,
-                            motive_param,
-                            motive_body_env,
-                            motive_body_exp,
-                        },
-                    ))
-                }
-                scr => inconsistent_panic(&scr),
-            },
-            Self::Pi(pi_exp) => {
-                let param = pi_exp.param.name;
-                let param_typ = pi_exp.param.typ.eval(env);
-                let ret_typ_env = env.clone();
-                let ret_typ_exp = pi_exp.ret_typ;
-                Dom::from(PiDom {
-                    param,
-                    param_typ,
-                    ret_typ_env,
-                    ret_typ_exp,
-                })
-            }
-            Self::Fun(fun_exp) => {
-                let param = fun_exp.param.name;
-                let body_env = env.clone();
-                let body_exp = fun_exp.body;
-                Dom::from(FunDom {
-                    param,
-                    body_env,
-                    body_exp,
-                })
-            }
-            Self::App(app_exp) => {
-                let fun = app_exp.fun.eval(env);
-                let arg = app_exp.arg.eval(env);
-                reduce_app(fun, arg)
-            }
-            Self::Var(id) => env[&id].clone(),
-        }
-    }
-}
-
-/// Reduce Domain-value Application
-///
-/// TODO: Extract panics
-fn reduce_app(fun: Dom, arg: Dom) -> Dom {
-    match fun {
-        Dom::Fun(fun_dom) => {
-            let mut new_env = fun_dom.body_env;
-            new_env.insert(fun_dom.param, arg);
-            fun_dom.body_exp.eval(&new_env)
-        }
-        Dom::Neut(dom_typ, fun) => {
-            let Dom::Pi(pi_dom) = *dom_typ else {
-                panic!("Invalid dom_typ {:?}", *dom_typ)
-            };
-            let mut new_env = pi_dom.ret_typ_env;
-            new_env.insert(pi_dom.param, arg.clone());
-            let arg = DomNorm {
-                typ: pi_dom.param_typ,
-                dom: arg,
-            };
-            Dom::from((pi_dom.ret_typ_exp.eval(&new_env), AppDom { fun, arg }))
-        }
-        _ => panic!("Invalid function {fun:?}"),
-    }
-}
-
-type Idents = Vec<Ident>;
-
-/// ## Readback from Domain Types ([DomNorm] and [DomNeut])
-trait Readback {
-    type NormalizedSyntax;
-
-    fn readback(self, ids: &mut Idents) -> Self::NormalizedSyntax;
-}
-
-impl Dom {
-    /// Special Readback from Domain as a Type
-    fn readback_typ(self, ids: &mut Idents) -> Norm {
-        match self {
-            Self::Univ(lvl) => Norm::from(lvl),
-            Self::Bottom => Norm::Bottom,
-            Self::Pi(pi_dom) => {
-                let PiDom {
-                    param: param_name,
-                    param_typ,
-                    mut ret_typ_env,
-                    ret_typ_exp,
-                } = *pi_dom;
-                let param = TypedName {
-                    name: param_name.clone(),
-                    typ: param_typ.clone().readback_typ(ids),
-                };
-                ret_typ_env.insert(
-                    param_name.clone(),
-                    Self::from((param_typ, param_name.clone())),
-                );
-                ids.push(param_name);
-                let ret_typ = ret_typ_exp.eval(&ret_typ_env).readback_typ(ids);
-                ids.pop();
-                Norm::from(Pi { param, ret_typ })
-            }
-            Self::Neut(_typ, neut) => Norm::from(neut.readback(ids)),
-            _ => non_type_exp_panic(&self),
-        }
-    }
-
-    /// Helper Readback for a Neutral Domain Value
-    fn readback_as_neut(self, ids: &mut Idents, err: fn(&Self) -> !) -> Neut {
-        DomNeut::try_from(self)
-            .unwrap_or_else(|x| err(&x))
-            .readback(ids)
-    }
-}
-
-impl Readback for DomNeut {
-    type NormalizedSyntax = Neut;
-
-    fn readback(self, ids: &mut Idents) -> Neut {
-        match self {
-            Self::Absurd(absurd_dom) => {
-                let AbsurdDom {
-                    scr,
-                    motive_param,
-                    mut motive_body_env,
-                    motive_body_exp,
-                } = *absurd_dom;
-                let scr = scr.readback(ids);
-                motive_body_env.insert(
-                    motive_param.clone(),
-                    Dom::from((Dom::Bottom, motive_param.clone())),
-                );
-                ids.push(motive_param.clone());
-                let motive_body = motive_body_exp.eval(&motive_body_env).readback_typ(ids);
-                ids.pop();
-                Neut::from(Absurd {
-                    scr,
-                    motive_param,
-                    motive_body,
-                })
-            }
-            Self::App(app_dom) => {
-                let fun = app_dom.fun.readback(ids);
-                let arg = app_dom.arg.readback(ids);
-                Neut::from(App { fun, arg })
-            }
-            Self::Var(id) => Neut::from(id),
-        }
-    }
-}
-
-impl Readback for DomNorm {
-    type NormalizedSyntax = Norm;
-
-    fn readback(self, ids: &mut Idents) -> Norm {
-        let Self { typ, dom } = self;
-        match typ {
-            Dom::Univ(_) => dom.readback_typ(ids),
-            Dom::Bottom => Norm::from(dom.readback_as_neut(ids, inconsistent_panic)),
-            Dom::Pi(pi_dom) => {
-                let PiDom {
-                    param: param_name,
-                    param_typ,
-                    mut ret_typ_env,
-                    ret_typ_exp,
-                } = *pi_dom;
-                let param = TypedName {
-                    name: param_name.clone(),
-                    typ: param_typ.clone().readback_typ(ids),
-                };
-                let param_itself = Dom::from((param_typ, param_name.clone()));
-                ret_typ_env.insert(param_name.clone(), param_itself.clone());
-                ids.push(param_name);
-                let ret_typ_dom = ret_typ_exp.eval(&ret_typ_env);
-                let body = Self {
-                    typ: ret_typ_dom,
-                    dom: reduce_app(dom, param_itself),
-                }
-                .readback(ids);
-                ids.pop();
-                Norm::from(Fun { param, body })
-            }
-            Dom::Neut(_, _) => Norm::from(dom.readback_as_neut(ids, non_neutral_exp_panic)),
-            _ => non_type_exp_panic(&typ),
-        }
-    }
-}
-
-////////////////////////////////////////////////////////////
-// Panic Functions
-////////////////////////////////////////////////////////////
-// TODO: Panic code should be implemented
-
-/// Helper for Inconsistency Case
-///
-/// TODO: Give panic codes
-fn inconsistent_panic(dom: &Dom) -> ! {
-    panic!("Inconsistent expression {:?} is found", *dom)
-}
-
-/// Helper for Non-neutral Expression Case when Expecting Neutral
-///
-/// TODO: Give panic codes
-fn non_neutral_exp_panic(dom: &Dom) -> ! {
-    panic!(
-        "Non-neutral expression {:?} cannot be readback under a neutral type",
-        *dom,
-    )
-}
-
-/// Helper for Non-type Expression Case when Expecting Type
-///
-/// TODO: Give panic codes
-fn non_type_exp_panic(dom: &Dom) -> ! {
-    panic!("Expression {:?} is not a type", *dom)
+fn env_into_idents<'a>(env: &Env<'a>) -> Idents<'a> {
+    env.keys().copied().collect()
 }
 
 #[cfg(test)]
@@ -383,7 +172,7 @@ mod tests {
             description => format!("{} : {}", exp_str, typ_str),
             omit_expression => true,
         }, {
-            insta::assert_ron_snapshot!(exp.nbe(typ, &HashMap::new()), @"Bottom");
+            insta::assert_ron_snapshot!(exp.nbe(&typ, &HashMap::new()), @"Bottom");
         });
     }
 
@@ -397,7 +186,7 @@ mod tests {
             description => format!("{} : {}", exp_str, typ_str),
             omit_expression => true,
         }, {
-            insta::assert_ron_snapshot!(exp.nbe(typ, &HashMap::new()), @r#"
+            insta::assert_ron_snapshot!(exp.nbe(&typ, &HashMap::new()), @r#"
       Fun(Fun(
         param: TypedName(
           name: "d",

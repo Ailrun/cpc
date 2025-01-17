@@ -10,7 +10,7 @@ fn main() {
 enum ReplError {
     Exit(i32),
     ParserError(String),
-    TypeCheckingError(TypeCheckError),
+    TypeCheckingError(String),
 }
 
 fn repl() {
@@ -40,12 +40,16 @@ fn run_instruction(s: &str) -> std::result::Result<(), ReplError> {
     })?;
     println!("Parsed Expression: {exp:?}");
     let ctx = HashMap::new();
-    let typ = infer(exp.clone(), &ctx).map_err(|e| {
+    let typ = infer(&exp, &ctx).map_err(|e| {
         println!("Ill-typed Expression");
-        ReplError::TypeCheckingError(e)
+        ReplError::TypeCheckingError(handle_typechecking_error(e))
     })?;
     println!("Infered Type: {typ:?}");
-    let normal_form = exp.nbe(Exp::from(typ), &ctx);
+    let normal_form = exp.nbe(&Exp::from(typ), &ctx);
     println!("Normalized Expression: {normal_form:?}");
     Ok(())
+}
+
+fn handle_typechecking_error(e: TypeCheckError) -> String {
+    format!("{e:?}")
 }
