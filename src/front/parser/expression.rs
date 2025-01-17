@@ -9,7 +9,7 @@
 //! - [atomic_expression]
 //! - [binder_expression]
 //! - [parameter]
-use nom::{branch::*, combinator::*, sequence::*, Parser};
+use nom::{branch::*, combinator::*, multi::*, sequence::*, Parser};
 
 use super::base::*;
 use super::combinators::*;
@@ -97,8 +97,14 @@ where
     T2: Parser<CpcInput<'a>, O2, CpcError<'a>>,
     F: Fn(TypedName<Typ>, Exp) -> Exp,
 {
-    tuple((binder_keyword, parameter, body_separator, expression))
-        .map(move |(_, param, _, body)| f(param, body))
+    tuple((binder_keyword, many1(parameter), body_separator, expression))
+        .map(move |(_, params, _, body)| {
+            let mut res = body;
+            for param in params {
+                res = f(param, res);
+            }
+            res
+        })
 }
 
 /// # Parameter Parser

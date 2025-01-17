@@ -12,14 +12,10 @@ impl<T> TypedName<T> {
     {
         docs![
             allocator,
-            docs![
-                allocator,
-                &self.name,
-                allocator.softline(),
-                ":",
-            ]
-            .group(),
-            allocator.line(),
+            &self.name,
+            allocator.softline(),
+            ":",
+            allocator.softline(),
             docs![allocator, &self.typ].nest(2).align().group(),
         ]
         .nest(2)
@@ -30,12 +26,45 @@ impl<T> TypedName<T> {
 
     pub fn to_pretty<'a>(&'a self, width: usize) -> String
     where
-        &'a T: Pretty<'a, RcAllocator>,
+        &'a T: Pretty<'a, RcAllocator, ()>,
     {
         let mut w = Vec::new();
-        self.to_doc(&RcAllocator).render(width, &mut w).unwrap();
+        self.to_doc::<RcAllocator, ()>(&RcAllocator)
+            .render(width, &mut w)
+            .unwrap();
         String::from_utf8(w).unwrap()
     }
+}
+
+fn typed_exp_to_doc<'a, D, A>(texp: &'a (Exp, Typ), allocator: &'a D) -> DocBuilder<'a, D, A>
+where
+    A: 'a,
+    D: 'a + ?Sized + DocAllocator<'a, A>,
+    DocBuilder<'a, D, A>: Clone,
+{
+    docs![
+        allocator,
+        &texp.0,
+        allocator.softline(),
+        ":",
+        allocator.softline(),
+        &texp.1,
+        allocator.softline(),
+    ]
+    .align()
+    .group()
+}
+
+pub fn typed_exp_to_pretty<'a, A>(texp: &'a (Exp, Typ), width: usize) -> String
+where
+    A: 'a,
+    DocBuilder<'a, RcAllocator, A>: Clone,
+{
+    let mut w = Vec::new();
+    typed_exp_to_doc(texp, &RcAllocator)
+        .render(width, &mut w)
+        .unwrap();
+    String::from_utf8(w).unwrap()
 }
 
 impl Exp {
@@ -58,13 +87,22 @@ impl Exp {
             Exp::Univ(lvl) => docs![allocator, "Type@", lvl.to_string()],
             Exp::Bottom => docs![allocator, "Bottom"],
             Exp::Absurd(absurd) => {
+                let scr = absurd
+                    .scr
+                    .to_doc_with_prec(1, allocator)
+                    .nest(2)
+                    .align()
+                    .group();
                 let motive = docs![
                     allocator,
                     &absurd.motive_param,
                     allocator.softline(),
                     ".",
-                    allocator.line(),
-                    docs![allocator, &absurd.motive_body].group(),
+                    allocator.softline(),
+                    docs![allocator, &absurd.motive_body]
+                        .nest(2)
+                        .align()
+                        .group(),
                 ]
                 .nest(2)
                 .align()
@@ -74,7 +112,7 @@ impl Exp {
                     allocator,
                     "absurd",
                     allocator.softline(),
-                    absurd.scr.to_doc_with_prec(1, allocator).group(),
+                    scr,
                     allocator.line(),
                     "return",
                     allocator.softline(),
@@ -91,16 +129,25 @@ impl Exp {
                 }
             }
             Exp::Pi(pi) => {
-                let binder = docs![allocator, "forall", allocator.softline(), &pi.param,].group();
+                let mut ret_typ = &pi.ret_typ;
+                let mut params = pi.param.to_doc(allocator);
+                while let Exp::Pi(pi) = ret_typ {
+                    params += allocator.line() + pi.param.to_doc(allocator);
+                    ret_typ = &pi.ret_typ;
+                }
+                let binder = docs![allocator, "forall", allocator.softline(), params.align().group()]
+                    .nest(2)
+                    .align()
+                    .group();
                 let doc = docs![
                     allocator,
                     binder,
                     allocator.line(),
                     ".",
                     allocator.softline(),
-                    docs![allocator, &pi.ret_typ].group(),
+                    docs![allocator, ret_typ].group(),
                 ]
-                .nest(2)
+                .nest(7)
                 .align()
                 .group();
 
@@ -111,16 +158,25 @@ impl Exp {
                 }
             }
             Exp::Fun(fun) => {
-                let binder = docs![allocator, "fun", allocator.softline(), &fun.param,].group();
+                let mut body = &fun.body;
+                let mut params = fun.param.to_doc(allocator);
+                while let Exp::Fun(fun) = body {
+                    params += allocator.line() + fun.param.to_doc(allocator);
+                    body = &fun.body;
+                }
+                let binder = docs![allocator, "fun", allocator.softline(), params.align().group()]
+                    .nest(2)
+                    .align()
+                    .group();
                 let doc = docs![
                     allocator,
                     binder,
                     allocator.line(),
                     "->",
                     allocator.softline(),
-                    fun.body.to_doc(allocator).group(),
+                    docs![allocator, body].group(),
                 ]
-                .nest(2)
+                .nest(4)
                 .align()
                 .group();
 
@@ -131,9 +187,15 @@ impl Exp {
                 }
             }
             Exp::App(app) => {
-                let doc = (app.fun.to_doc_with_prec(1, allocator)
+                let mut args = app.arg.to_doc_with_prec(2, allocator);
+                let mut fun = &app.fun;
+                while let Exp::App(app) = fun {
+                    args = app.arg.to_doc_with_prec(2, allocator) + allocator.line() + args;
+                    fun = &app.fun;
+                }
+                let doc = (fun.to_doc_with_prec(1, allocator)
                     + allocator.line()
-                    + app.arg.to_doc_with_prec(2, allocator))
+                    + args.align())
                 .nest(2)
                 .align()
                 .group();
@@ -148,9 +210,9 @@ impl Exp {
         }
     }
 
-    pub fn to_pretty<'a>(&'a self, width: usize) -> String {
+    pub fn to_pretty(&self, width: usize) -> String {
         let mut w = Vec::new();
-        self.to_doc::<'a, RcAllocator, ()>(&RcAllocator)
+        self.to_doc::<RcAllocator, ()>(&RcAllocator)
             .render(width, &mut w)
             .unwrap();
         String::from_utf8(w).unwrap()
