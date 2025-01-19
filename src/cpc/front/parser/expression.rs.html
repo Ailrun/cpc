@@ -115,7 +115,9 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Expression Parsers of CPC
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Expression Parsers of CPC
 //!
 //! This module provides the following parsers:
 //! - [expression]
@@ -162,13 +164,15 @@
 }
 
 <span class="kw">fn </span>absurd_expression(input: CpcInput) -&gt; CpcResult&lt;Exp&gt; {
-    tuple((
+    <span class="kw">let </span>rest = (expression,
+             keyword(<span class="string">"return"</span>),
+             parened(separated_pair(identifier, symbol(<span class="string">"."</span>), expression)));
+    <span class="kw">let </span>l = (
         keyword(<span class="string">"absurd"</span>),
-        expression,
-        keyword(<span class="string">"return"</span>),
-        parened(separated_pair(identifier, symbol(<span class="string">"."</span>), expression)),
-    ))
-    .map(|(<span class="kw">_</span>, scr, <span class="kw">_</span>, (motive_param, motive_body))| {
+        cut(tuple(rest)),
+    );
+    tuple(l)
+    .map(|(<span class="kw">_</span>, (scr, <span class="kw">_</span>, (motive_param, motive_body)))| {
         Exp::from(Absurd {
             scr,
             motive_param,
@@ -188,7 +192,7 @@
 
 <span class="kw">fn </span>atomic_expression(input: CpcInput) -&gt; CpcResult&lt;Exp&gt; {
     <span class="kw">let </span>univ_expression =
-        separated_pair(keyword(<span class="string">"Univ"</span>), symbol(<span class="string">"@"</span>), level).map(|(<span class="kw">_</span>, lvl)| Exp::from(lvl));
+        separated_pair(keyword(<span class="string">"Univ"</span>), symbol(<span class="string">"@"</span>), cut(level)).map(|(<span class="kw">_</span>, lvl)| Exp::from(lvl));
     alt((
         value(Exp::Bottom, alt((keyword(<span class="string">"Bottom"</span>), symbol(<span class="string">"⊥"</span>)))),
         univ_expression,
@@ -214,8 +218,8 @@
     T2: Parser&lt;CpcInput&lt;<span class="lifetime">'a</span>&gt;, O2, CpcError&lt;<span class="lifetime">'a</span>&gt;&gt;,
     F: Fn(TypedName&lt;Typ&gt;, Exp) -&gt; Exp,
 {
-    tuple((binder_keyword, many1(parameter), body_separator, expression)).map(
-        <span class="kw">move </span>|(<span class="kw">_</span>, params, <span class="kw">_</span>, <span class="kw-2">mut </span>body)| {
+    tuple((binder_keyword, cut(tuple((many1(parameter), body_separator, expression))))).map(
+        <span class="kw">move </span>|(<span class="kw">_</span>, (params, <span class="kw">_</span>, <span class="kw-2">mut </span>body))| {
             <span class="kw">for </span>param <span class="kw">in </span>params {
                 body = f(param, body);
             }
@@ -228,7 +232,7 @@
 ///
 /// This parses a string of `(&lt;ident&gt; : &lt;expression&gt;)`.
 </span><span class="kw">fn </span>parameter(input: CpcInput) -&gt; CpcResult&lt;TypedName&lt;Typ&gt;&gt; {
-    parened(separated_pair(identifier, symbol(<span class="string">":"</span>), expression))
+    parened(separated_pair(identifier, symbol(<span class="string">":"</span>), cut(expression)))
         .map(|(name, typ)| TypedName { name, typ })
         .parse(input)
 }

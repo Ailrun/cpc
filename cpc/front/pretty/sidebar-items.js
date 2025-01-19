@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["typed_exp_to_doc","typed_exp_to_pretty"]};
+window.SIDEBAR_ITEMS = {"fn":["typed_exp_to_doc","typed_exp_to_indented_pretty","typed_exp_to_pretty"]};
