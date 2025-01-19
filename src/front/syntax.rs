@@ -3,6 +3,11 @@
 use serde::Serialize;
 use std::collections::HashMap;
 
+pub enum ReplInstr {
+    Check(Exp, Typ),
+    Infer(Exp),
+}
+
 pub type Ident = String;
 
 /// # Universe Level Starting from 0.

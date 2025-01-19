@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 use pretty::*;
 
 use crate::front::syntax::*;
@@ -28,11 +30,28 @@ impl<T> TypedName<T> {
     where
         &'a T: Pretty<'a, RcAllocator, ()>,
     {
+        self.to_indented_pretty(0, width)
+    }
+
+    pub fn to_indented_pretty<'a>(&'a self, indent: usize, width: usize) -> String
+    where
+        &'a T: Pretty<'a, RcAllocator, ()>,
+    {
         let mut w = Vec::new();
         self.to_doc::<RcAllocator, ()>(&RcAllocator)
+            .indent(indent)
             .render(width, &mut w)
             .unwrap();
         String::from_utf8(w).unwrap()
+    }
+}
+
+impl<T> Display for TypedName<T>
+where
+    for<'a> &'a T: Pretty<'a, RcAllocator, ()>,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.to_pretty(80).as_str())
     }
 }
 
@@ -55,13 +74,16 @@ where
     .group()
 }
 
-pub fn typed_exp_to_pretty<'a, A>(texp: &'a (Exp, Typ), width: usize) -> String
-where
-    A: 'a,
-    DocBuilder<'a, RcAllocator, A>: Clone,
+pub fn typed_exp_to_pretty<'a>(texp: &'a (Exp, Typ), width: usize) -> String
+{
+    typed_exp_to_indented_pretty(texp, 0, width)
+}
+
+pub fn typed_exp_to_indented_pretty<'a>(texp: &'a (Exp, Typ), indent: usize, width: usize) -> String
 {
     let mut w = Vec::new();
-    typed_exp_to_doc(texp, &RcAllocator)
+    typed_exp_to_doc::<RcAllocator, ()>(texp, &RcAllocator)
+        .indent(indent)
         .render(width, &mut w)
         .unwrap();
     String::from_utf8(w).unwrap()
@@ -210,24 +232,61 @@ impl Exp {
         }
     }
 
-    pub fn to_pretty(&self, width: usize) -> String {
+    pub fn to_pretty<'a>(&'a self, width: usize) -> String
+    {
+        self.to_indented_pretty(0, width)
+    }
+
+    pub fn to_indented_pretty<'a>(&'a self, indent: usize, width: usize) -> String
+    {
         let mut w = Vec::new();
         self.to_doc::<RcAllocator, ()>(&RcAllocator)
+            .indent(indent)
             .render(width, &mut w)
             .unwrap();
         String::from_utf8(w).unwrap()
     }
 }
 
+impl Display for Exp {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.to_pretty(80).as_str())
+    }
+}
+
 impl Norm {
-    pub fn to_pretty(&self, width: usize) -> String {
-        Exp::from(self.clone()).to_pretty(width)
+    pub fn to_pretty<'a>(&'a self, width: usize) -> String
+    {
+        self.to_indented_pretty(0, width)
+    }
+
+    pub fn to_indented_pretty<'a>(&'a self, indent: usize, width: usize) -> String
+    {
+        Exp::from(self.clone()).to_indented_pretty(indent, width)
+    }
+}
+
+impl Display for Norm {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.to_pretty(80).as_str())
     }
 }
 
 impl Neut {
-    pub fn to_pretty(&self, width: usize) -> String {
-        Exp::from(self.clone()).to_pretty(width)
+    pub fn to_pretty<'a>(&'a self, width: usize) -> String
+    {
+        self.to_indented_pretty(0, width)
+    }
+
+    pub fn to_indented_pretty<'a>(&'a self, indent: usize, width: usize) -> String
+    {
+        Exp::from(self.clone()).to_indented_pretty(indent, width)
+    }
+}
+
+impl Display for Neut {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.to_pretty(80).as_str())
     }
 }
 

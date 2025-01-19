@@ -3,7 +3,9 @@
 //!
 //! This module implements following parsers:
 //! - [proper_expression]
-use nom::{error::Error, Finish, Parser};
+use base::CpcResult;
+use lexerlike::symbol;
+use nom::{branch::*, error::Error, sequence::*, Finish, Parser};
 
 #[doc(hidden)]
 mod base;
@@ -17,7 +19,29 @@ mod lexerlike;
 use combinators::*;
 use expression::*;
 
-use crate::front::syntax::Exp;
+use crate::front::syntax::{Exp, ReplInstr};
+
+use ReplInstr::*;
+
+/// # Parser for Repl Instructions
+///
+/// This parser reads a REPL instruction by consuming
+/// the entire input. Note that this ignores whitespaces
+/// at the beginning of the input as well as at the end.
+pub fn proper_repl_instruction(input: &str) -> Result<ReplInstr, Error<&str>> {
+    proper(repl_instruction)
+        .parse(input)
+        .finish()
+        .map(|(_, instr)| instr)
+}
+
+fn repl_instruction(input: &str) -> CpcResult<ReplInstr> {
+    alt((
+        tuple((expression, symbol(":"), expression)).map(|(exp, _, typ)| Check(exp, typ)),
+        expression.map(Infer),
+    ))
+    .parse(input)
+}
 
 /// # Parser for Proper Expression Syntax
 ///
