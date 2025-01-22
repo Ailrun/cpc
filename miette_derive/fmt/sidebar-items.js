@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["explicit_named_args","parse_token_expr","take_ident","take_int"],"struct":["Display"]};

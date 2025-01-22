@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"derive":["Hash"],"mod":["slice"],"struct":["CharIndices","Chars","Copied","Enumerate","Formatter","Iter","Range","RangeFrom","RangeFull","RangeTo","String","Vec"],"trait":["Display","FromStr","Hash","Hasher","ToString"],"type":["FmtResult"]};

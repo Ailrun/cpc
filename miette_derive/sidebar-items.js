@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"derive":["Diagnostic"],"mod":["code","diagnostic","diagnostic_arg","diagnostic_source","fmt","forward","help","label","related","severity","source_code","url","utils"]};

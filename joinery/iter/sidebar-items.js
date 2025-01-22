@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["JoinItem"],"fn":["join_size"],"struct":["CloneIterator","JoinIter"],"trait":["JoinableIterator"]};

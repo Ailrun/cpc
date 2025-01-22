@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["short_frames_strict","short_frames_strict_impl"],"trait":["Backtraceish","Frameish","Symbolish"]};

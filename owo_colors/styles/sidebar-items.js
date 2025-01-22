@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["impl_fmt_for_style"],"struct":["BlinkDisplay","BlinkFastDisplay","BoldDisplay","DimDisplay","HiddenDisplay","ItalicDisplay","ReversedDisplay","StrikeThroughDisplay","UnderlineDisplay"]};

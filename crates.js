@@ -1,2 +1,2 @@
-window.ALL_CRATES = ["arrayvec","cpc","memchr","minimal_lexical","nom","pretty","proc_macro2","quote","serde","serde_derive","syn","typed_arena","unicode_ident","unicode_width"];
-//{"start":21,"fragment_lengths":[10,6,9,18,6,9,14,8,8,15,6,14,16,16]}
+window.ALL_CRATES = ["addr2line","adler2","arrayvec","backtrace","backtrace_ext","bitflags","brownstone","bytecount","cfg_if","cpc","gimli","indent_write","is_ci","joinery","libc","linux_raw_sys","memchr","miette","miette_derive","minimal_lexical","miniz_oxide","nom","nom_locate","nom_supreme","object","owo_colors","pretty","proc_macro2","quote","rustc_demangle","rustix","serde","serde_derive","supports_color","supports_hyperlinks","supports_unicode","syn","terminal_size","textwrap","thiserror","typed_arena","unicode_ident","unicode_linebreak","unicode_width"];
+//{"start":21,"fragment_lengths":[11,9,11,12,16,11,13,12,9,6,8,15,8,10,7,16,9,9,16,18,14,6,13,14,9,13,9,14,8,17,9,8,15,17,22,19,6,16,11,12,14,16,20,16]}

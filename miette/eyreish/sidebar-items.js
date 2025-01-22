@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["capture_handler","get_default_printer","set_hook"],"mod":["context","error","fmt","into_diagnostic","kind","macros","ptr","wrapper"],"static":["HOOK"],"struct":["InstallError","Report"],"trait":["ReportHandler","WrapErr"],"type":["ErrorHook","Result"]};

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/front/parser/expression.rs`."><title>expression.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="cpc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">cpc/front/parser/</div>expression.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/front/parser/expression.rs`."><title>expression.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="cpc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0 (9fc6b4312 2025-01-07)" data-channel="1.84.0" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../../static.files/storage-59e33391.js"></script><script defer src="../../../../static.files/src-script-56102188.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">cpc/front/parser/</div>expression.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -117,7 +117,10 @@
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Expression Parsers of CPC
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Expression Parsers of CPC
 //!
 //! This module provides the following parsers:
 //! - [expression]
@@ -129,6 +132,7 @@
 //! - [binder_expression]
 //! - [parameter]
 </span><span class="kw">use </span>nom::{branch::<span class="kw-2">*</span>, combinator::<span class="kw-2">*</span>, multi::<span class="kw-2">*</span>, sequence::<span class="kw-2">*</span>, Parser};
+<span class="kw">use </span>nom_supreme::ParserExt;
 
 <span class="kw">use </span><span class="kw">super</span>::base::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">super</span>::combinators::<span class="kw-2">*</span>;
@@ -146,7 +150,8 @@
 }
 
 <span class="kw">fn </span>pi_expression(input: CpcInput) -&gt; CpcResult&lt;Exp&gt; {
-    <span class="kw">let </span>pi_binder = alt((keyword(<span class="string">"forall"</span>), keyword(<span class="string">"Pi"</span>), keyword(<span class="string">"∀"</span>), keyword(<span class="string">"Π"</span>)));
+    <span class="kw">let </span>pi_binder =
+        alt((keyword(<span class="string">"forall"</span>), keyword(<span class="string">"Pi"</span>), keyword(<span class="string">"∀"</span>), keyword(<span class="string">"Π"</span>))).context(<span class="string">"pi binder"</span>);
     <span class="kw">let </span>pi_separator = symbol(<span class="string">"."</span>);
     binder_expression(pi_binder, pi_separator, |param, ret_typ| {
         Exp::from(Pi { param, ret_typ })
@@ -155,7 +160,8 @@
 }
 
 <span class="kw">fn </span>lambda_expression(input: CpcInput) -&gt; CpcResult&lt;Exp&gt; {
-    <span class="kw">let </span>lambda_binder = alt((keyword(<span class="string">"fun"</span>), keyword(<span class="string">"lambda"</span>), keyword(<span class="string">"λ"</span>)));
+    <span class="kw">let </span>lambda_binder =
+        alt((keyword(<span class="string">"fun"</span>), keyword(<span class="string">"lambda"</span>), keyword(<span class="string">"λ"</span>))).context(<span class="string">"lambda binder"</span>);
     <span class="kw">let </span>lambda_separator = symbol(<span class="string">"-&gt;"</span>);
     binder_expression(lambda_binder, lambda_separator, |param, body| {
         Exp::from(Fun { param, body })
@@ -164,22 +170,20 @@
 }
 
 <span class="kw">fn </span>absurd_expression(input: CpcInput) -&gt; CpcResult&lt;Exp&gt; {
-    <span class="kw">let </span>rest = (expression,
-             keyword(<span class="string">"return"</span>),
-             parened(separated_pair(identifier, symbol(<span class="string">"."</span>), expression)));
-    <span class="kw">let </span>l = (
-        keyword(<span class="string">"absurd"</span>),
-        cut(tuple(rest)),
+    <span class="kw">let </span>rest = (
+        expression,
+        keyword(<span class="string">"return"</span>),
+        parened(separated_pair(identifier, symbol(<span class="string">"."</span>), expression)),
     );
-    tuple(l)
-    .map(|(<span class="kw">_</span>, (scr, <span class="kw">_</span>, (motive_param, motive_body)))| {
-        Exp::from(Absurd {
-            scr,
-            motive_param,
-            motive_body,
+    tuple((keyword(<span class="string">"absurd"</span>), tuple(rest).cut()))
+        .map(|(<span class="kw">_</span>, (scr, <span class="kw">_</span>, (motive_param, motive_body)))| {
+            Exp::from(Absurd {
+                scr,
+                motive_param,
+                motive_body,
+            })
         })
-    })
-    .parse(input)
+        .parse(input)
 }
 
 <span class="kw">fn </span>applicative_expression(input: CpcInput) -&gt; CpcResult&lt;Exp&gt; {
@@ -192,7 +196,7 @@
 
 <span class="kw">fn </span>atomic_expression(input: CpcInput) -&gt; CpcResult&lt;Exp&gt; {
     <span class="kw">let </span>univ_expression =
-        separated_pair(keyword(<span class="string">"Univ"</span>), symbol(<span class="string">"@"</span>), cut(level)).map(|(<span class="kw">_</span>, lvl)| Exp::from(lvl));
+        separated_pair(keyword(<span class="string">"Univ"</span>), symbol(<span class="string">"@"</span>), level.cut()).map(|(<span class="kw">_</span>, lvl)| Exp::from(lvl));
     alt((
         value(Exp::Bottom, alt((keyword(<span class="string">"Bottom"</span>), symbol(<span class="string">"⊥"</span>)))),
         univ_expression,
@@ -218,21 +222,23 @@
     T2: Parser&lt;CpcInput&lt;<span class="lifetime">'a</span>&gt;, O2, CpcError&lt;<span class="lifetime">'a</span>&gt;&gt;,
     F: Fn(TypedName&lt;Typ&gt;, Exp) -&gt; Exp,
 {
-    tuple((binder_keyword, cut(tuple((many1(parameter), body_separator, expression))))).map(
-        <span class="kw">move </span>|(<span class="kw">_</span>, (params, <span class="kw">_</span>, <span class="kw-2">mut </span>body))| {
-            <span class="kw">for </span>param <span class="kw">in </span>params {
-                body = f(param, body);
-            }
-            body
-        },
-    )
+    tuple((
+        binder_keyword,
+        tuple((many1(parameter), body_separator, expression)).cut(),
+    ))
+    .map(<span class="kw">move </span>|(<span class="kw">_</span>, (params, <span class="kw">_</span>, <span class="kw-2">mut </span>body))| {
+        <span class="kw">for </span>param <span class="kw">in </span>params {
+            body = f(param, body);
+        }
+        body
+    })
 }
 
 <span class="doccomment">/// # Parameter Parser
 ///
 /// This parses a string of `(&lt;ident&gt; : &lt;expression&gt;)`.
 </span><span class="kw">fn </span>parameter(input: CpcInput) -&gt; CpcResult&lt;TypedName&lt;Typ&gt;&gt; {
-    parened(separated_pair(identifier, symbol(<span class="string">":"</span>), cut(expression)))
+    parened(separated_pair(identifier, symbol(<span class="string">":"</span>), expression.cut()))
         .map(|(name, typ)| TypedName { name, typ })
         .parse(input)
 }

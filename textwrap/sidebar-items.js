@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LineEnding","WordSeparator"],"fn":["dedent","fill","fill_inplace","indent","refill","unfill","wrap","wrap_columns"],"mod":["columns","core","fill","indentation","line_ending","options","refill","word_separators","word_splitters","wrap","wrap_algorithms"],"struct":["Options"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Severity"],"macro":["box_borrow_impls","box_error_impls"],"struct":["LabeledSpan","MietteSpanContents","SourceOffset","SourceSpan"],"trait":["Diagnostic","SourceCode","SpanContents"],"type":["ByteOffset"]};

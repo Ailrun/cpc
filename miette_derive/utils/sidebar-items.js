@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MemberOrString"],"fn":["display_pat_members","gen_all_variants_with","gen_fields_pat","gen_unused_pat"]};

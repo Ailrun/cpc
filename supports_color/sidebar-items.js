@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Stream"],"fn":["as_str","check_256_color","check_ansi_color","check_colorterm_16m","check_term_16m","env_force_color","env_no_color","is_a_tty","on","on_cached","supports_color","translate_level"],"macro":["assert_stream_in_bounds"],"struct":["ColorLevel"]};

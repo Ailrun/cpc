@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["fix_array_impl","fix_array_impl_recursive"],"trait":["Array","Index"]};

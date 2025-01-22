@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BLINK_FAST_SHIFT","BLINK_SHIFT","DIMMED_SHIFT","HIDDEN_SHIFT","ITALIC_SHIFT","REVERSED_SHIFT","STRIKETHROUGH_SHIFT","UNDERLINE_SHIFT"],"enum":["Effect"],"fn":["style"],"macro":["color_methods","impl_fmt","style_flags_methods","style_methods"],"struct":["Style","StyleFlags","Styled"]};

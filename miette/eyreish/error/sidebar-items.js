@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["context_chain_downcast","context_chain_drop_rest","context_downcast","context_drop_rest","object_boxed","object_boxed_stderr","object_downcast","object_drop","object_drop_front","object_ref","object_ref_stderr","vtable"],"struct":["ContextError","ErrorImpl","ErrorVTable"],"type":["ErasedErrorImpl"]};

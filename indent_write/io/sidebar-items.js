@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IndentState"],"struct":["IndentWriter"]};

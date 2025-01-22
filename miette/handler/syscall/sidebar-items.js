@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["supports_color_has_16m","supports_hyperlinks","supports_unicode","terminal_width"]};

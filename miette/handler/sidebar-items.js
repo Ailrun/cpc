@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RgbColors"],"mod":["syscall"],"struct":["MietteHandler","MietteHandlerOpts"]};

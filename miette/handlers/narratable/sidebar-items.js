@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SpanAttach"],"fn":["safe_get_column"],"struct":["Line","NarratableReportHandler"]};

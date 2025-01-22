@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Action","OptionalActions","QueueSelector"],"mod":["speed"],"struct":["ControlModes","InputModes","LocalModes","OutputModes","SpecialCodeIndex","SpecialCodes","Termios"],"type":["Winsize"]};

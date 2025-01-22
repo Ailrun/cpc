@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["tcdrain","tcflow","tcflush","tcgetattr","tcgetpgrp","tcgetsid","tcgetwinsize","tcsendbreak","tcsetattr","tcsetpgrp","tcsetwinsize"]};

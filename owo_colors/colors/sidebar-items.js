@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["colors","impl_fmt_for","impl_fmt_for_dyn"],"mod":["ansi_colors","css","custom","dynamic","xterm"],"struct":["Black","Blue","BrightBlack","BrightBlue","BrightCyan","BrightGreen","BrightMagenta","BrightRed","BrightWhite","BrightYellow","CustomColor","Cyan","Default","Green","Magenta","Red","White","Yellow"]};
