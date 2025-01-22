@@ -28,7 +28,8 @@ pub fn expression(input: CpcInput) -> CpcResult<Exp> {
 }
 
 fn pi_expression(input: CpcInput) -> CpcResult<Exp> {
-    let pi_binder = alt((keyword("forall"), keyword("Pi"), keyword("∀"), keyword("Π"))).context("pi binder");
+    let pi_binder =
+        alt((keyword("forall"), keyword("Pi"), keyword("∀"), keyword("Π"))).context("pi binder");
     let pi_separator = symbol(".");
     binder_expression(pi_binder, pi_separator, |param, ret_typ| {
         Exp::from(Pi { param, ret_typ })
@@ -37,7 +38,8 @@ fn pi_expression(input: CpcInput) -> CpcResult<Exp> {
 }
 
 fn lambda_expression(input: CpcInput) -> CpcResult<Exp> {
-    let lambda_binder = alt((keyword("fun"), keyword("lambda"), keyword("λ"))).context("lambda binder");
+    let lambda_binder =
+        alt((keyword("fun"), keyword("lambda"), keyword("λ"))).context("lambda binder");
     let lambda_separator = symbol("->");
     binder_expression(lambda_binder, lambda_separator, |param, body| {
         Exp::from(Fun { param, body })
@@ -46,22 +48,20 @@ fn lambda_expression(input: CpcInput) -> CpcResult<Exp> {
 }
 
 fn absurd_expression(input: CpcInput) -> CpcResult<Exp> {
-    let rest = (expression,
-             keyword("return"),
-             parened(separated_pair(identifier, symbol("."), expression)));
-    let l = (
-        keyword("absurd"),
-        cut(tuple(rest)),
+    let rest = (
+        expression,
+        keyword("return"),
+        parened(separated_pair(identifier, symbol("."), expression)),
     );
-    tuple(l)
-    .map(|(_, (scr, _, (motive_param, motive_body)))| {
-        Exp::from(Absurd {
-            scr,
-            motive_param,
-            motive_body,
+    tuple((keyword("absurd"), tuple(rest).cut()))
+        .map(|(_, (scr, _, (motive_param, motive_body)))| {
+            Exp::from(Absurd {
+                scr,
+                motive_param,
+                motive_body,
+            })
         })
-    })
-    .parse(input)
+        .parse(input)
 }
 
 fn applicative_expression(input: CpcInput) -> CpcResult<Exp> {
@@ -74,7 +74,7 @@ fn applicative_expression(input: CpcInput) -> CpcResult<Exp> {
 
 fn atomic_expression(input: CpcInput) -> CpcResult<Exp> {
     let univ_expression =
-        separated_pair(keyword("Univ"), symbol("@"), cut(level)).map(|(_, lvl)| Exp::from(lvl));
+        separated_pair(keyword("Univ"), symbol("@"), level.cut()).map(|(_, lvl)| Exp::from(lvl));
     alt((
         value(Exp::Bottom, alt((keyword("Bottom"), symbol("⊥")))),
         univ_expression,
@@ -100,21 +100,23 @@ where
     T2: Parser<CpcInput<'a>, O2, CpcError<'a>>,
     F: Fn(TypedName<Typ>, Exp) -> Exp,
 {
-    tuple((binder_keyword, cut(tuple((many1(parameter), body_separator, expression))))).map(
-        move |(_, (params, _, mut body))| {
-            for param in params {
-                body = f(param, body);
-            }
-            body
-        },
-    )
+    tuple((
+        binder_keyword,
+        tuple((many1(parameter), body_separator, expression)).cut(),
+    ))
+    .map(move |(_, (params, _, mut body))| {
+        for param in params {
+            body = f(param, body);
+        }
+        body
+    })
 }
 
 /// # Parameter Parser
 ///
 /// This parses a string of `(<ident> : <expression>)`.
 fn parameter(input: CpcInput) -> CpcResult<TypedName<Typ>> {
-    parened(separated_pair(identifier, symbol(":"), cut(expression)))
+    parened(separated_pair(identifier, symbol(":"), expression.cut()))
         .map(|(name, typ)| TypedName { name, typ })
         .parse(input)
 }

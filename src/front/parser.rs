@@ -10,6 +10,7 @@ use nom_supreme::{
     error::{ErrorTree, GenericErrorTree},
     final_parser::final_parser,
 };
+use thiserror::Error;
 
 #[doc(hidden)]
 mod base;
@@ -60,40 +61,65 @@ pub fn proper_expression<'a>(file: &'a str, input: &'a str) -> Result<Exp, Strin
         .map_err(pretty_error(orig_input))
 }
 
+#[derive(Clone, Debug, Diagnostic, Error)]
+#[diagnostic()]
+#[error("Syntax Error")]
+struct ParserDiag {
+    #[source_code]
+    src: String,
+    message: String,
+    #[label(collection, "")]
+    labels: Vec<LabeledSpan>,
+    #[related]
+    related: Vec<Self>,
+}
+
 fn pretty_error(src: String) -> impl FnOnce(ErrorTree<CpcInput>) -> String {
-    let diag = MietteDiagnostic::new("Syntax error");
+    let mut diag = ParserDiag {
+        src: src.clone(),
+        message: String::from("In"),
+        labels: vec![],
+        related: vec![],
+    };
     |e| {
+        add_error_to_diag(&mut diag, src, e);
         format!(
             "{:?}",
-            Error::new(add_error_to_diag(diag, e)).with_source_code(src)
+            Into::<Error>::into(diag)
         )
     }
 }
 
 #[allow(dead_code)]
-fn add_error_to_diag(diag: MietteDiagnostic, e: ErrorTree<CpcInput>) -> MietteDiagnostic {
+fn add_error_to_diag(diag: &mut ParserDiag, src: String, e: ErrorTree<CpcInput>)  {
     match e {
         GenericErrorTree::Base { location, kind } => {
-            diag.and_label(LabeledSpan::new_primary_with_span(
+            diag.labels.push(LabeledSpan::new_primary_with_span(
                 Some(kind.to_string()),
                 (location.location_offset(), 1),
             ))
         }
         GenericErrorTree::Stack { base, contexts } => {
-            add_error_to_diag(diag, *base).and_labels(contexts.iter().map(|context| {
+            add_error_to_diag(diag, src, *base);
+            diag.labels.extend(contexts.iter().map(|context| {
                 LabeledSpan::new(
                     Some(format!("{}", context.1)),
                     context.0.location_offset(),
                     context.0.len(),
                 )
-            }))
+            }));
         }
         GenericErrorTree::Alt(vec) => {
-            let mut diag = diag;
             for e in vec {
-                diag = add_error_to_diag(diag, e);
+                let mut ediag = ParserDiag {
+                    src: src.clone(),
+                    message: String::from("Or in"),
+                    labels: vec![],
+                    related: vec![],
+                };
+                add_error_to_diag(&mut ediag, src.clone(), e);
+                diag.related.push(ediag)
             }
-            diag
         }
     }
 }

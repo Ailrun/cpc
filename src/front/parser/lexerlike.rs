@@ -11,29 +11,27 @@ use crate::front::syntax::*;
 pub fn identifier(input: CpcInput) -> CpcResult<Ident> {
     let first_character = satisfy(|c| c.is_alphabetic() || c == '_');
     let other_characters = take_while(|c: char| c.is_alphanumeric() || c == '_');
-    let identifier_like = terminated(
-        recognize(pair(first_character, other_characters)),
-        multispace0,
-    );
+    let identifier_like = pair(first_character, other_characters)
+        .recognize()
+        .terminated(multispace0);
     let x = verify(identifier_like, is_not_keyword);
     Parser::into(x.map(|s: CpcInput| s.into_fragment())).parse(input)
 }
 
 pub fn level(input: CpcInput) -> CpcResult<Level> {
-    terminated(u128, multispace0).parse(input)
+    u128.terminated(multispace0).parse(input)
 }
 
 pub fn keyword<'a>(s: &'static str) -> impl Parser<CpcInput<'a>, (), CpcError<'a>> {
     debug_assert!(KEYWORD_LIST.contains(&s));
-    value(
-        (),
-        terminated(tag(s), preceded(not(alphanumeric1), multispace0)),
-    )
-    .context("keyword")
+    tag(s)
+        .terminated(preceded(not(alphanumeric1), multispace0))
+        .value(())
+        .context("keyword")
 }
 
 pub fn symbol<'a>(s: &'static str) -> impl Parser<CpcInput<'a>, (), CpcError<'a>> {
-    value((), terminated(tag(s), multispace0))
+    tag(s).terminated(multispace0).value(())
 }
 
 fn is_not_keyword(s: &CpcInput) -> bool {
