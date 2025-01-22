@@ -1,6 +1,9 @@
 #![allow(rustdoc::private_intra_doc_links)]
 //! # Lexer-like Parsers
-use nom::{bytes::complete::*, character::complete::*, combinator::*, sequence::*, Parser};
+use nom::{
+    bytes::complete::take_while, character::complete::*, combinator::*, sequence::*, Parser,
+};
+use nom_supreme::{tag::complete::tag, ParserExt};
 
 use super::base::*;
 use crate::front::syntax::*;
@@ -12,7 +15,8 @@ pub fn identifier(input: CpcInput) -> CpcResult<Ident> {
         recognize(pair(first_character, other_characters)),
         multispace0,
     );
-    Parser::into(verify(identifier_like, is_not_keyword)).parse(input)
+    let x = verify(identifier_like, is_not_keyword);
+    Parser::into(x.map(|s: CpcInput| s.into_fragment())).parse(input)
 }
 
 pub fn level(input: CpcInput) -> CpcResult<Level> {
@@ -25,14 +29,15 @@ pub fn keyword<'a>(s: &'static str) -> impl Parser<CpcInput<'a>, (), CpcError<'a
         (),
         terminated(tag(s), preceded(not(alphanumeric1), multispace0)),
     )
+    .context("keyword")
 }
 
 pub fn symbol<'a>(s: &'static str) -> impl Parser<CpcInput<'a>, (), CpcError<'a>> {
     value((), terminated(tag(s), multispace0))
 }
 
-fn is_not_keyword(s: &str) -> bool {
-    !KEYWORD_LIST.contains(&s)
+fn is_not_keyword(s: &CpcInput) -> bool {
+    !KEYWORD_LIST.contains(s.fragment())
 }
 
 /// # List of Keywords in CPC

@@ -227,8 +227,8 @@ mod tests {
         let exp_str = "(fun (a : Univ@0) -> a) Bottom";
         let typ_str = "Univ@0";
         let ctx = HashMap::new();
-        let exp = parser::proper_expression(exp_str).unwrap();
-        let typ = parser::proper_expression(typ_str).unwrap().nbe_typ(&ctx);
+        let exp = parser::proper_expression("test", exp_str).unwrap();
+        let typ = parser::proper_expression("test", typ_str).unwrap().nbe_typ(&ctx);
         assert_ok!(check(&exp, typ.clone(), &ctx));
     }
 
@@ -237,8 +237,8 @@ mod tests {
         let exp_str = "(fun (a : Pi (qwe : Univ@1) . Univ@1) -> a) (lambda (b : Univ@1) -> b)";
         let typ_str = "Pi (d : Univ@1) . Univ@1";
         let ctx = HashMap::new();
-        let exp = parser::proper_expression(exp_str).unwrap();
-        let typ = parser::proper_expression(typ_str).unwrap().nbe_typ(&ctx);
+        let exp = parser::proper_expression("test", exp_str).unwrap();
+        let typ = parser::proper_expression("test", typ_str).unwrap().nbe_typ(&ctx);
         assert_ok!(check(&exp, typ.clone(), &ctx));
     }
 }

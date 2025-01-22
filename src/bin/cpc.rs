@@ -3,9 +3,11 @@ use std::{collections::HashMap, io::*, process::exit};
 use cpc::{front::parser, front::syntax::*, kernel::typecheck::*};
 
 fn main() {
+    let mut n = 0;
     loop {
+        n += 1;
         let s = read_instruction();
-        if let Err(e) = interpret_instruction(s.as_str()) {
+        if let Err(e) = interpret_instruction(n, s.as_str()) {
             handle_error(e)
         }
     }
@@ -27,20 +29,19 @@ enum ReplError {
     TypeCheckingError(String),
 }
 
-fn interpret_instruction(s: &str) -> std::result::Result<(), ReplError> {
-    let instr = parse_instruction(s)?;
-    run_instruction(instr)
+fn interpret_instruction(n: usize, s: &str) -> std::result::Result<(), ReplError> {
+    let instr = parse_instruction(n, s)?;
+    run_instruction(n, instr)
 }
 
-fn parse_instruction(s: &str) -> std::result::Result<ReplInstr, ReplError> {
+fn parse_instruction(n: usize, s: &str) -> std::result::Result<ReplInstr, ReplError> {
     (!s.is_empty()).then_some(()).ok_or(ReplError::Exit(1))?;
-    parser::proper_repl_instruction(s).map_err(|e| {
-        eprintln!("Parse Error...");
-        ReplError::ParserError(String::from(e.to_string()))
+    parser::proper_repl_instruction(format!("command {}", n).as_str(), s).map_err(|e| {
+        ReplError::ParserError(e)
     })
 }
 
-fn run_instruction(instr: ReplInstr) -> std::result::Result<(), ReplError> {
+fn run_instruction(_n: usize, instr: ReplInstr) -> std::result::Result<(), ReplError> {
     match instr {
         ReplInstr::Check(exp, typ) => run_check(exp, typ),
         ReplInstr::Infer(exp) => run_infer(exp),

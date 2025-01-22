@@ -10,6 +10,7 @@
 //! - [binder_expression]
 //! - [parameter]
 use nom::{branch::*, combinator::*, multi::*, sequence::*, Parser};
+use nom_supreme::ParserExt;
 
 use super::base::*;
 use super::combinators::*;
@@ -27,7 +28,7 @@ pub fn expression(input: CpcInput) -> CpcResult<Exp> {
 }
 
 fn pi_expression(input: CpcInput) -> CpcResult<Exp> {
-    let pi_binder = alt((keyword("forall"), keyword("Pi"), keyword("∀"), keyword("Π")));
+    let pi_binder = alt((keyword("forall"), keyword("Pi"), keyword("∀"), keyword("Π"))).context("pi binder");
     let pi_separator = symbol(".");
     binder_expression(pi_binder, pi_separator, |param, ret_typ| {
         Exp::from(Pi { param, ret_typ })
@@ -36,7 +37,7 @@ fn pi_expression(input: CpcInput) -> CpcResult<Exp> {
 }
 
 fn lambda_expression(input: CpcInput) -> CpcResult<Exp> {
-    let lambda_binder = alt((keyword("fun"), keyword("lambda"), keyword("λ")));
+    let lambda_binder = alt((keyword("fun"), keyword("lambda"), keyword("λ"))).context("lambda binder");
     let lambda_separator = symbol("->");
     binder_expression(lambda_binder, lambda_separator, |param, body| {
         Exp::from(Fun { param, body })

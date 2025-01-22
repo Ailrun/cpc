@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn universe_nbe_typ_normal_form0() {
         let exp_str = "Univ@1";
-        let exp = parser::proper_expression(exp_str).unwrap();
+        let exp = parser::proper_expression("test", exp_str).unwrap();
         insta::with_settings!({
             description => exp_str,
             omit_expression => true,
@@ -88,7 +88,7 @@ mod tests {
     #[test]
     fn universe_nbe_typ_normal_form1() {
         let exp_str = "Univ@3122180";
-        let exp = parser::proper_expression(exp_str).unwrap();
+        let exp = parser::proper_expression("test", exp_str).unwrap();
         insta::with_settings!({
             description => exp_str,
             omit_expression => true,
@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn pi_nbe_typ_normal_form0() {
         let exp_str = "Pi (asda : Bottom) . Bottom";
-        let exp = parser::proper_expression(exp_str).unwrap();
+        let exp = parser::proper_expression("test", exp_str).unwrap();
         insta::with_settings!({
             description => exp_str,
             omit_expression => true,
@@ -120,7 +120,7 @@ mod tests {
     #[test]
     fn pi_nbe_typ_argument0() {
         let exp_str = "Pi (qqq : (fun (a : Univ@0) -> a) Bottom) . Bottom";
-        let exp = parser::proper_expression(exp_str).unwrap();
+        let exp = parser::proper_expression("test", exp_str).unwrap();
         insta::with_settings!({
             description => exp_str,
             omit_expression => true,
@@ -141,7 +141,7 @@ mod tests {
     fn pi_nbe_typ_return_type0() {
         let exp_str =
             "Pi (qqq : Bottom) . (fun (a : Bottom) -> absurd a return (qwdwq . Univ@0)) qqq";
-        let exp = parser::proper_expression(exp_str).unwrap();
+        let exp = parser::proper_expression("test", exp_str).unwrap();
         insta::with_settings!({
             description => exp_str,
             omit_expression => true,
@@ -166,8 +166,8 @@ mod tests {
     fn application_nbe_beta0() {
         let exp_str = "(fun (a : Univ@0) -> a) Bottom";
         let typ_str = "Univ@0";
-        let exp = parser::proper_expression(exp_str).unwrap();
-        let typ = parser::proper_expression(typ_str).unwrap();
+        let exp = parser::proper_expression("test", exp_str).unwrap();
+        let typ = parser::proper_expression("test", typ_str).unwrap();
         insta::with_settings!({
             description => format!("{} : {}", exp_str, typ_str),
             omit_expression => true,
@@ -180,8 +180,8 @@ mod tests {
     fn application_nbe_beta1() {
         let exp_str = "(fun (a : Pi (qwe : Univ@1) . Univ@1) -> a) (lambda (b : Univ@1) -> b)";
         let typ_str = "Pi (d : Univ@1) . Univ@1";
-        let exp = parser::proper_expression(exp_str).unwrap();
-        let typ = parser::proper_expression(typ_str).unwrap();
+        let exp = parser::proper_expression("test", exp_str).unwrap();
+        let typ = parser::proper_expression("test", typ_str).unwrap();
         insta::with_settings!({
             description => format!("{} : {}", exp_str, typ_str),
             omit_expression => true,
