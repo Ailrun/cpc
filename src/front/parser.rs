@@ -3,7 +3,7 @@
 //!
 //! This module implements following parsers:
 //! - [proper_expression]
-use miette::{Diagnostic, Error, LabeledSpan, MietteDiagnostic, Severity, SourceCode};
+use miette::{Diagnostic, Error, LabeledSpan};
 use nom::{combinator::opt, sequence::*, Parser};
 use nom_locate::LocatedSpan;
 use nom_supreme::{
