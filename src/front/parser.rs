@@ -3,32 +3,17 @@
 //!
 //! This module implements following parsers:
 //! - [proper_expression]
+use std::convert::Infallible;
+
+use lalrpop_util::{lalrpop_mod, ParseError};
 use miette::{Diagnostic, Error, LabeledSpan};
-use nom::{combinator::opt, sequence::*, Parser};
-use nom_locate::LocatedSpan;
-use nom_supreme::{
-    error::{ErrorTree, GenericErrorTree},
-    final_parser::final_parser,
-};
 use thiserror::Error;
-
-#[doc(hidden)]
-mod base;
-mod combinators;
-#[cfg(test)]
-#[allow(dead_code)]
-mod debug;
-mod expression;
-mod lexerlike;
-
-use base::{CpcInput, CpcResult};
-use combinators::*;
-use expression::*;
-use lexerlike::symbol;
 
 use crate::front::syntax::{Exp, ReplInstr};
 
-use ReplInstr::*;
+use super::token::{Lexer, Token};
+
+lalrpop_mod!(grammar, "/front/grammar.rs");
 
 /// # Parser for Repl Instructions
 ///
@@ -36,18 +21,11 @@ use ReplInstr::*;
 /// the entire input. Note that this ignores whitespaces
 /// at the beginning of the input as well as at the end.
 pub fn proper_repl_instruction<'a>(file: &'a str, input: &'a str) -> Result<ReplInstr, String> {
+    let file_name = String::from(file);
     let orig_input = String::from(input);
-    final_parser(proper(repl_instruction))(LocatedSpan::new_extra(input, file))
-        .map_err(pretty_error(orig_input))
-}
-
-fn repl_instruction(input: CpcInput) -> CpcResult<ReplInstr> {
-    tuple((expression, opt(preceded(symbol(":"), expression))))
-        .map(|(exp, opt_typ)| match opt_typ {
-            Some(typ) => Check(exp, typ),
-            None => Infer(exp),
-        })
-        .parse(input)
+    grammar::ReplInstrParser::new()
+        .parse(Lexer::new(input))
+        .map_err(pretty_error(file_name, orig_input))
 }
 
 /// # Parser for Proper Expression Syntax
@@ -56,71 +34,43 @@ fn repl_instruction(input: CpcInput) -> CpcResult<ReplInstr> {
 /// the entire input. Note that this ignores whitespaces
 /// at the beginning of the input as well as at the end.
 pub fn proper_expression<'a>(file: &'a str, input: &'a str) -> Result<Exp, String> {
+    let file_name = String::from(file);
     let orig_input = String::from(input);
-    final_parser(proper(expression))(LocatedSpan::new_extra(input, file))
-        .map_err(pretty_error(orig_input))
+    grammar::ExpParser::new()
+        .parse(Lexer::new(input))
+        .map_err(pretty_error(file_name, orig_input))
 }
 
 #[derive(Clone, Debug, Diagnostic, Error)]
 #[diagnostic()]
-#[error("Syntax Error")]
+#[error("Syntax Error in {file}")]
 struct ParserDiag {
+    file: String,
     #[source_code]
     src: String,
     message: String,
     #[label(collection, "")]
     labels: Vec<LabeledSpan>,
-    #[related]
-    related: Vec<Self>,
 }
 
-fn pretty_error(src: String) -> impl FnOnce(ErrorTree<CpcInput>) -> String {
+fn pretty_error(
+    file: String,
+    src: String,
+) -> impl FnOnce(ParseError<usize, Token, Infallible>) -> String {
     let mut diag = ParserDiag {
-        src: src.clone(),
+        file,
+        src,
         message: String::from("In"),
         labels: vec![],
-        related: vec![],
     };
     |e| {
-        add_error_to_diag(&mut diag, src, e);
-        format!(
-            "{:?}",
-            Into::<Error>::into(diag)
-        )
-    }
-}
-
-#[allow(dead_code)]
-fn add_error_to_diag(diag: &mut ParserDiag, src: String, e: ErrorTree<CpcInput>)  {
-    match e {
-        GenericErrorTree::Base { location, kind } => {
-            diag.labels.push(LabeledSpan::new_primary_with_span(
-                Some(kind.to_string()),
-                (location.location_offset(), 1),
-            ))
-        }
-        GenericErrorTree::Stack { base, contexts } => {
-            add_error_to_diag(diag, src, *base);
-            diag.labels.extend(contexts.iter().map(|context| {
-                LabeledSpan::new(
-                    Some(format!("{}", context.1)),
-                    context.0.location_offset(),
-                    context.0.len(),
-                )
-            }));
-        }
-        GenericErrorTree::Alt(vec) => {
-            for e in vec {
-                let mut ediag = ParserDiag {
-                    src: src.clone(),
-                    message: String::from("Or in"),
-                    labels: vec![],
-                    related: vec![],
-                };
-                add_error_to_diag(&mut ediag, src.clone(), e);
-                diag.related.push(ediag)
-            }
-        }
+        match e {
+            ParseError::InvalidToken { location } => diag.labels.push(LabeledSpan::new_primary_with_span(Some(String::from("Invalid Token")), (location, 1))),
+            ParseError::UnrecognizedEof { location, expected } => diag.labels.push(LabeledSpan::new_primary_with_span(Some(format!("Unexpected EOF; expected one of {}", expected.join(", "))), (location, 1))),
+            ParseError::UnrecognizedToken { token, expected } => diag.labels.push(LabeledSpan::new_primary_with_span(Some(format!("Unexpected token {} found; expected one of {}", token.1, expected.join(", "))), (token.0, token.2 - token.0))),
+            ParseError::ExtraToken { token } => diag.labels.push(LabeledSpan::new_primary_with_span(Some(format!("Extraneous token {} found", token.1)), (token.0, token.2 - token.0))),
+        };
+        format!("{:?}", Into::<Error>::into(diag))
     }
 }
 

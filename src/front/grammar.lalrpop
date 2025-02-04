@@ -1,0 +1,85 @@
+use std::convert::Infallible;
+
+use crate::front::syntax::{*, Exp, ReplInstr::*};
+use crate::front::token::Token;
+
+grammar;
+
+pub ReplInstr: ReplInstr = {
+    <exp:Exp> ":" <typ:Typ> => Check(exp, typ),
+    <exp:Exp> => Infer(exp),
+}
+
+pub Exp: Exp = {
+    PiBinderKeyword <param:Parameter> "." <ret_typ:Exp> => Exp::from(Pi { param, ret_typ }),
+    FunBinderKeyword <param:Parameter> "->" <body:Exp> => Exp::from(Fun { param, body }),
+    "Absurd" <scr:Exp> "Return" "(" <motive_param:"identifier"> "." <motive_body:Exp> ")" => Exp::from(Absurd { scr, motive_param, motive_body }),
+    ApplicativeExp,
+};
+
+ApplicativeExp: Exp = {
+    <fun:ApplicativeExp> <arg:AtomicExp> => Exp::from(App { fun, arg }),
+    AtomicExp,
+}
+
+AtomicExp: Exp = {
+    <id:"identifier"> => Exp::from(String::from(id)),
+    BottomKeyword => Exp::Bottom,
+    "Univ" "@" <n:"level"> => Exp::from(n),
+    "(" <Exp> ")" => <>,
+};
+
+Typ: Typ = Exp;
+
+Parameter: TypedName<Typ> = {
+    "(" <name:"identifier"> ":" <typ:Typ> ")" => TypedName { name, typ },
+};
+
+BottomKeyword: () = {
+    "Bottom" => (),
+    "UnicodeBottom" => (),
+};
+
+PiBinderKeyword: () = {
+    "Pi" => (),
+    "UnicodePi" => (),
+    "Forall" => (),
+    "UnicodeForall" => (),
+};
+
+FunBinderKeyword: () = {
+    "Fun" => (),
+    "Lambda" => (),
+    "UnicodeLambda" => (),
+};
+
+extern {
+  type Location = usize;
+  type Error = Infallible;
+
+  enum Token {
+    "level" => Token::Level(<Level>),
+    "identifier" => Token::Identifier(<String>),
+
+    "(" => Token::LParen,
+    ")" => Token::RParen,
+    "->" => Token::Arrow,
+    "@" => Token::At,
+    ":" => Token::Colon,
+    "," => Token::Comma,
+    "." => Token::Dot,
+
+    "Univ" => Token::Univ,
+    "Forall" => Token::Forall,
+    "UnicodeForall" => Token::UnicodeForall,
+    "Pi" => Token::Pi,
+    "UnicodePi" => Token::UnicodePi,
+    "Fun" => Token::Fun,
+    "Lambda" => Token::Lambda,
+    "UnicodeLambda" => Token::UnicodeLambda,
+    "Bottom" => Token::Bottom,
+    "UnicodeBottom" => Token::UnicodeBottom,
+    "Absurd" => Token::Absurd,
+    "Return" => Token::Return,
+  }
+}
