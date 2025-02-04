@@ -54,6 +54,7 @@ FunBinderKeyword: () = {
 };
 
 extern {
+  type Location= usize;
   type Error = Infallible;
 
   enum Token {
