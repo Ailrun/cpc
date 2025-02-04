@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["absurd_expression","applicative_expression","atomic_expression","binder_expression","expression","lambda_expression","parameter","pi_expression"]};

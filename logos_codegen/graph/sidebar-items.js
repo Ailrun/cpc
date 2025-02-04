@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Node"],"mod":["fork","impls","meta","range","regex","rope"],"struct":["DeferredMerge","DisambiguationError","Graph","Merge","NodeId","ReservedId"],"trait":["Disambiguate"]};

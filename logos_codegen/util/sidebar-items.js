@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MaybeVoid"],"fn":["expect_punct","is_punct"],"trait":["ToIdent"]};

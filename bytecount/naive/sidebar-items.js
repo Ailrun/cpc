@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["naive_count","naive_count_32","naive_num_chars"]};

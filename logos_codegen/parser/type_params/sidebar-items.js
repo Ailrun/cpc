@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["replace_lifetime","replace_lifetimes","traverse_path","traverse_type"],"struct":["TypeParams"]};

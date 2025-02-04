@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["extend_panic","raw_ptr_add"],"macro":["panic_oob"],"struct":["ArrayVec","Drain","IntoIter","ScopeExitGuard"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["internal"],"type":["Cow"]};

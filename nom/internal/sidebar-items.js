@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Err","Needed"],"struct":["And","AndThen","FlatMap","Into","Map","Or"],"trait":["Finish","Parser"],"type":["IResult"]};

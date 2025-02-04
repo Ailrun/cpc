@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["delimited","pair","preceded","separated_pair","terminated","tuple"],"macro":["tuple_trait","tuple_trait_impl","tuple_trait_inner"],"trait":["Tuple"]};

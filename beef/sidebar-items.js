@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["test"],"mod":["generic","lean","traits","wide"],"type":["Cow"]};

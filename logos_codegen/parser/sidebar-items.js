@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Mode"],"mod":["definition","ignore_flags","nested","subpattern","type_params"],"struct":["Parser"]};

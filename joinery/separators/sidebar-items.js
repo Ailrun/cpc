@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["const_separator"],"struct":["Comma","CommaSpace","Dash","Dot","Newline","NoSeparator","Slash","Space","Tab","Underscore"]};

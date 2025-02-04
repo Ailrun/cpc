@@ -134,87 +134,22 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a></pre></div><pre class="rust"><code><span class="attr">#![allow(rustdoc::private_intra_doc_links)]
+<a href="#136" id="136">136</a></pre></div><pre class="rust"><code><span class="attr">#![allow(rustdoc::private_intra_doc_links)]
 </span><span class="doccomment">//! # Parsers of CPC
 //!
 //! This module implements following parsers:
 //! - [proper_expression]
-</span><span class="kw">use </span>miette::{Diagnostic, Error, LabeledSpan};
-<span class="kw">use </span>nom::{combinator::opt, sequence::<span class="kw-2">*</span>, Parser};
-<span class="kw">use </span>nom_locate::LocatedSpan;
-<span class="kw">use </span>nom_supreme::{
-    error::{ErrorTree, GenericErrorTree},
-    final_parser::final_parser,
-};
+</span><span class="kw">use </span>std::convert::Infallible;
+
+<span class="kw">use </span>lalrpop_util::{lalrpop_mod, ParseError};
+<span class="kw">use </span>miette::{Diagnostic, Error, LabeledSpan};
 <span class="kw">use </span>thiserror::Error;
-
-<span class="attr">#[doc(hidden)]
-</span><span class="kw">mod </span>base;
-<span class="kw">mod </span>combinators;
-<span class="attr">#[cfg(test)]
-#[allow(dead_code)]
-</span><span class="kw">mod </span>debug;
-<span class="kw">mod </span>expression;
-<span class="kw">mod </span>lexerlike;
-
-<span class="kw">use </span>base::{CpcInput, CpcResult};
-<span class="kw">use </span>combinators::<span class="kw-2">*</span>;
-<span class="kw">use </span>expression::<span class="kw-2">*</span>;
-<span class="kw">use </span>lexerlike::symbol;
 
 <span class="kw">use </span><span class="kw">crate</span>::front::syntax::{Exp, ReplInstr};
 
-<span class="kw">use </span>ReplInstr::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">super</span>::token::{Lexer, Token};
+
+<span class="macro">lalrpop_mod!</span>(grammar, <span class="string">"/front/grammar.rs"</span>);
 
 <span class="doccomment">/// # Parser for Repl Instructions
 ///
@@ -222,18 +157,11 @@
 /// the entire input. Note that this ignores whitespaces
 /// at the beginning of the input as well as at the end.
 </span><span class="kw">pub fn </span>proper_repl_instruction&lt;<span class="lifetime">'a</span>&gt;(file: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, input: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;ReplInstr, String&gt; {
+    <span class="kw">let </span>file_name = String::from(file);
     <span class="kw">let </span>orig_input = String::from(input);
-    final_parser(proper(repl_instruction))(LocatedSpan::new_extra(input, file))
-        .map_err(pretty_error(orig_input))
-}
-
-<span class="kw">fn </span>repl_instruction(input: CpcInput) -&gt; CpcResult&lt;ReplInstr&gt; {
-    tuple((expression, opt(preceded(symbol(<span class="string">":"</span>), expression))))
-        .map(|(exp, opt_typ)| <span class="kw">match </span>opt_typ {
-            <span class="prelude-val">Some</span>(typ) =&gt; Check(exp, typ),
-            <span class="prelude-val">None </span>=&gt; Infer(exp),
-        })
-        .parse(input)
+    grammar::ReplInstrParser::new()
+        .parse(Lexer::new(input))
+        .map_err(pretty_error(file_name, orig_input))
 }
 
 <span class="doccomment">/// # Parser for Proper Expression Syntax
@@ -242,71 +170,43 @@
 /// the entire input. Note that this ignores whitespaces
 /// at the beginning of the input as well as at the end.
 </span><span class="kw">pub fn </span>proper_expression&lt;<span class="lifetime">'a</span>&gt;(file: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, input: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Exp, String&gt; {
+    <span class="kw">let </span>file_name = String::from(file);
     <span class="kw">let </span>orig_input = String::from(input);
-    final_parser(proper(expression))(LocatedSpan::new_extra(input, file))
-        .map_err(pretty_error(orig_input))
+    grammar::ExpParser::new()
+        .parse(Lexer::new(input))
+        .map_err(pretty_error(file_name, orig_input))
 }
 
 <span class="attr">#[derive(Clone, Debug, Diagnostic, Error)]
 #[diagnostic()]
-#[error(<span class="string">"Syntax Error"</span>)]
+#[error(<span class="string">"Syntax Error in {file}"</span>)]
 </span><span class="kw">struct </span>ParserDiag {
+    file: String,
     <span class="attr">#[source_code]
     </span>src: String,
     message: String,
     <span class="attr">#[label(collection, <span class="string">""</span>)]
     </span>labels: Vec&lt;LabeledSpan&gt;,
-    <span class="attr">#[related]
-    </span>related: Vec&lt;<span class="self">Self</span>&gt;,
 }
 
-<span class="kw">fn </span>pretty_error(src: String) -&gt; <span class="kw">impl </span>FnOnce(ErrorTree&lt;CpcInput&gt;) -&gt; String {
+<span class="kw">fn </span>pretty_error(
+    file: String,
+    src: String,
+) -&gt; <span class="kw">impl </span>FnOnce(ParseError&lt;usize, Token, Infallible&gt;) -&gt; String {
     <span class="kw">let </span><span class="kw-2">mut </span>diag = ParserDiag {
-        src: src.clone(),
+        file,
+        src,
         message: String::from(<span class="string">"In"</span>),
         labels: <span class="macro">vec!</span>[],
-        related: <span class="macro">vec!</span>[],
     };
     |e| {
-        add_error_to_diag(<span class="kw-2">&amp;mut </span>diag, src, e);
-        <span class="macro">format!</span>(
-            <span class="string">"{:?}"</span>,
-            Into::&lt;Error&gt;::into(diag)
-        )
-    }
-}
-
-<span class="attr">#[allow(dead_code)]
-</span><span class="kw">fn </span>add_error_to_diag(diag: <span class="kw-2">&amp;mut </span>ParserDiag, src: String, e: ErrorTree&lt;CpcInput&gt;)  {
-    <span class="kw">match </span>e {
-        GenericErrorTree::Base { location, kind } =&gt; {
-            diag.labels.push(LabeledSpan::new_primary_with_span(
-                <span class="prelude-val">Some</span>(kind.to_string()),
-                (location.location_offset(), <span class="number">1</span>),
-            ))
-        }
-        GenericErrorTree::Stack { base, contexts } =&gt; {
-            add_error_to_diag(diag, src, <span class="kw-2">*</span>base);
-            diag.labels.extend(contexts.iter().map(|context| {
-                LabeledSpan::new(
-                    <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"{}"</span>, context.<span class="number">1</span>)),
-                    context.<span class="number">0</span>.location_offset(),
-                    context.<span class="number">0</span>.len(),
-                )
-            }));
-        }
-        GenericErrorTree::Alt(vec) =&gt; {
-            <span class="kw">for </span>e <span class="kw">in </span>vec {
-                <span class="kw">let </span><span class="kw-2">mut </span>ediag = ParserDiag {
-                    src: src.clone(),
-                    message: String::from(<span class="string">"Or in"</span>),
-                    labels: <span class="macro">vec!</span>[],
-                    related: <span class="macro">vec!</span>[],
-                };
-                add_error_to_diag(<span class="kw-2">&amp;mut </span>ediag, src.clone(), e);
-                diag.related.push(ediag)
-            }
-        }
+        <span class="kw">match </span>e {
+            ParseError::InvalidToken { location } =&gt; diag.labels.push(LabeledSpan::new_primary_with_span(<span class="prelude-val">Some</span>(String::from(<span class="string">"Invalid Token"</span>)), (location, <span class="number">1</span>))),
+            ParseError::UnrecognizedEof { location, expected } =&gt; diag.labels.push(LabeledSpan::new_primary_with_span(<span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"Unexpected EOF; expected one of {}"</span>, expected.join(<span class="string">", "</span>))), (location, <span class="number">1</span>))),
+            ParseError::UnrecognizedToken { token, expected } =&gt; diag.labels.push(LabeledSpan::new_primary_with_span(<span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"Unexpected token {} found; expected one of {}"</span>, token.<span class="number">1</span>, expected.join(<span class="string">", "</span>))), (token.<span class="number">0</span>, token.<span class="number">2 </span>- token.<span class="number">0</span>))),
+            ParseError::ExtraToken { token } =&gt; diag.labels.push(LabeledSpan::new_primary_with_span(<span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"Extraneous token {} found"</span>, token.<span class="number">1</span>)), (token.<span class="number">0</span>, token.<span class="number">2 </span>- token.<span class="number">0</span>))),
+        };
+        <span class="macro">format!</span>(<span class="string">"{:?}"</span>, Into::&lt;Error&gt;::into(diag))
     }
 }
 

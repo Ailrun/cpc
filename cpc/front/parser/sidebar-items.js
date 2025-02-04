@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["add_error_to_diag","pretty_error","proper_expression","proper_repl_instruction","repl_instruction"],"mod":["combinators","expression","lexerlike"],"struct":["ParserDiag"]};
+window.SIDEBAR_ITEMS = {"fn":["pretty_error","proper_expression","proper_repl_instruction"],"mod":["grammar"],"struct":["ParserDiag"]};

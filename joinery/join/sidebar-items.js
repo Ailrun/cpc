@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["private"],"struct":["Join"],"trait":["Joinable","Separator"]};
