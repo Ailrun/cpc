@@ -2749,7 +2749,7 @@
 <a href="#2748" id="2748">2748</a>
 <a href="#2749" id="2749">2749</a>
 <a href="#2750" id="2750">2750</a></pre></div><pre class="rust"><code><span class="comment">// auto-generated: "lalrpop 0.22.1"
-// sha3: 44a9a9fe8ab245cdc79db082f14dfa30475ae9206d0f6b3c5a4df7de2f95d354
+// sha3: 507c15aa98dc4e113e440bba2968c608278a57be52e91b2fa25187eaf8a4c867
 </span><span class="kw">use </span>std::convert::Infallible;
 <span class="kw">use </span><span class="kw">crate</span>::front::syntax::{<span class="kw-2">*</span>, Exp, ReplInstr::<span class="kw-2">*</span>};
 <span class="kw">use </span><span class="kw">crate</span>::front::token::Token;
@@ -5261,21 +5261,21 @@
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
 </span><span class="kw">fn </span>__action2&lt;
 &gt;(
-    (<span class="kw">_</span>, exp, <span class="kw">_</span>): (usize, Exp, usize),
+    (<span class="kw">_</span>, __0, <span class="kw">_</span>): (usize, Exp, usize),
     (<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>): (usize, Token, usize),
-    (<span class="kw">_</span>, typ, <span class="kw">_</span>): (usize, Typ, usize),
+    (<span class="kw">_</span>, __1, <span class="kw">_</span>): (usize, Typ, usize),
 ) -&gt; ReplInstr
 {
-    Check(exp, typ)
+    Check(__0, __1)
 }
 
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
 </span><span class="kw">fn </span>__action3&lt;
 &gt;(
-    (<span class="kw">_</span>, exp, <span class="kw">_</span>): (usize, Exp, usize),
+    (<span class="kw">_</span>, __0, <span class="kw">_</span>): (usize, Exp, usize),
 ) -&gt; ReplInstr
 {
-    Infer(exp)
+    Infer(__0)
 }
 
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
@@ -5287,7 +5287,7 @@
     (<span class="kw">_</span>, ret_typ, <span class="kw">_</span>): (usize, Exp, usize),
 ) -&gt; Exp
 {
-    Exp::from(Pi { param, ret_typ })
+    Exp::from(Pi {param, ret_typ})
 }
 
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
@@ -5299,7 +5299,7 @@
     (<span class="kw">_</span>, body, <span class="kw">_</span>): (usize, Exp, usize),
 ) -&gt; Exp
 {
-    Exp::from(Fun { param, body })
+    Exp::from(Fun {param, body})
 }
 
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
@@ -5315,7 +5315,7 @@
     (<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>): (usize, Token, usize),
 ) -&gt; Exp
 {
-    Exp::from(Absurd { scr, motive_param, motive_body })
+    Exp::from(Absurd {scr, motive_param, motive_body})
 }
 
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
@@ -5334,7 +5334,7 @@
     (<span class="kw">_</span>, arg, <span class="kw">_</span>): (usize, Exp, usize),
 ) -&gt; Exp
 {
-    Exp::from(App { fun, arg })
+    Exp::from(App {fun, arg})
 }
 
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
@@ -5349,10 +5349,10 @@
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
 </span><span class="kw">fn </span>__action10&lt;
 &gt;(
-    (<span class="kw">_</span>, id, <span class="kw">_</span>): (usize, String, usize),
+    (<span class="kw">_</span>, __0, <span class="kw">_</span>): (usize, String, usize),
 ) -&gt; Exp
 {
-    Exp::from(String::from(id))
+    Exp::from(String::from(__0))
 }
 
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
@@ -5369,10 +5369,10 @@
 &gt;(
     (<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>): (usize, Token, usize),
     (<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>): (usize, Token, usize),
-    (<span class="kw">_</span>, n, <span class="kw">_</span>): (usize, Level, usize),
+    (<span class="kw">_</span>, __0, <span class="kw">_</span>): (usize, Level, usize),
 ) -&gt; Exp
 {
-    Exp::from(n)
+    Exp::from(__0)
 }
 
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
@@ -5405,7 +5405,7 @@
     (<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>): (usize, Token, usize),
 ) -&gt; TypedName&lt;Typ&gt;
 {
-    TypedName { name, typ }
+    TypedName {name, typ}
 }
 
 <span class="attr">#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
