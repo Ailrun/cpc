@@ -6,33 +6,33 @@ use crate::front::token::Token;
 grammar;
 
 pub ReplInstr: ReplInstr = {
-    <exp:Exp> ":" <typ:Typ> => Check(exp, typ),
-    <exp:Exp> => Infer(exp),
+    <Exp> ":" <Typ> => Check(<>),
+    <Exp> => Infer(<>),
 }
 
 pub Exp: Exp = {
-    PiBinderKeyword <param:Parameter> "." <ret_typ:Exp> => Exp::from(Pi { param, ret_typ }),
-    FunBinderKeyword <param:Parameter> "->" <body:Exp> => Exp::from(Fun { param, body }),
-    "Absurd" <scr:Exp> "Return" "(" <motive_param:"identifier"> "." <motive_body:Exp> ")" => Exp::from(Absurd { scr, motive_param, motive_body }),
+    PiBinderKeyword <param:Parameter> "." <ret_typ:Exp> => Exp::from(Pi {<>}),
+    FunBinderKeyword <param:Parameter> "->" <body:Exp> => Exp::from(Fun {<>}),
+    "Absurd" <scr:Exp> "Return" "(" <motive_param:"identifier"> "." <motive_body:Exp> ")" => Exp::from(Absurd {<>}),
     ApplicativeExp,
 };
 
 ApplicativeExp: Exp = {
-    <fun:ApplicativeExp> <arg:AtomicExp> => Exp::from(App { fun, arg }),
+    <fun:ApplicativeExp> <arg:AtomicExp> => Exp::from(App {<>}),
     AtomicExp,
 }
 
 AtomicExp: Exp = {
-    <id:"identifier"> => Exp::from(String::from(id)),
+    <"identifier"> => Exp::from(String::from(<>)),
     BottomKeyword => Exp::Bottom,
-    "Univ" "@" <n:"level"> => Exp::from(n),
+    "Univ" "@" <"level"> => Exp::from(<>),
     "(" <Exp> ")" => <>,
 };
 
 Typ: Typ = Exp;
 
 Parameter: TypedName<Typ> = {
-    "(" <name:"identifier"> ":" <typ:Typ> ")" => TypedName { name, typ },
+    "(" <name:"identifier"> ":" <typ:Typ> ")" => TypedName {<>},
 };
 
 BottomKeyword: () = {
@@ -54,7 +54,6 @@ FunBinderKeyword: () = {
 };
 
 extern {
-  type Location = usize;
   type Error = Infallible;
 
   enum Token {
