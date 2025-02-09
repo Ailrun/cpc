@@ -3,23 +3,18 @@ use super::{domain::*, panic::*};
 use crate::front::syntax::*;
 
 /// # Main Trait for Evaluation
-pub trait Eval {
-    type Domain<'a>
-    where
-        Self: 'a;
+pub trait Eval<'a> {
+    type Domain;
+    type Environment;
 
-    type Environment<'a>
-    where
-        Self: 'a;
-
-    fn eval<'a>(&'a self, env: &Self::Environment<'a>) -> Self::Domain<'a>;
+    fn eval(&'a self, env: &Self::Environment) -> Self::Domain;
 }
 
-impl Eval for Exp {
-    type Domain<'a> = Dom<'a>;
-    type Environment<'a> = Env<'a>;
+impl<'a> Eval<'a> for Exp {
+    type Domain = Dom<'a>;
+    type Environment = Env<'a>;
 
-    fn eval<'a>(&'a self, env: &Env<'a>) -> Dom<'a> {
+    fn eval(&'a self, env: &Env<'a>) -> Dom<'a> {
         match self {
             Self::Univ(lvl) => Dom::from(*lvl),
             Self::Bottom => Dom::Bottom,
