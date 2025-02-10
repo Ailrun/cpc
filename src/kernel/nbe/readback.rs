@@ -2,6 +2,8 @@
 //!
 //! This module describes readback from domain into syntactic forms,
 //! specifically from [DomNorm] and [DomNeut] into [Norm] and [Neut] respectively.
+use std::collections::HashSet;
+
 use super::{domain::*, evaluation::*, panic::*};
 use crate::front::syntax::*;
 
@@ -9,21 +11,21 @@ use crate::front::syntax::*;
 ///
 /// This will be needed in a future when we create new names
 /// to avoid identifier conflicts.
-pub type Idents<'a> = Vec<&'a Ident>;
+pub type Idents = HashSet<Ident>;
 
 /// # Main Trait for Readback
-pub trait Readback<'a> {
+pub trait Readback {
     type NormalizedSyntax;
 
     /// This method takes the ownership of `self`
     /// as we also want to take the ownership of [Dom] as a domain type
     /// in domain values.
-    fn readback(self, ids: &mut Idents<'a>) -> Self::NormalizedSyntax;
+    fn readback(self, ids: &mut Idents) -> Self::NormalizedSyntax;
 }
 
 impl<'a> Dom<'a> {
     /// Special Readback from a domain type into a normalized syntactic type.
-    pub fn readback_typ(self, ids: &mut Idents<'a>) -> Norm {
+    pub fn readback_typ(self, ids: &mut Idents) -> Norm {
         match self {
             Self::Univ(lvl) => Norm::from(lvl),
             Self::Bottom => Norm::Bottom,
@@ -34,14 +36,15 @@ impl<'a> Dom<'a> {
                     mut ret_typ_env,
                     ret_typ_exp,
                 } = *pi_dom;
+                let new_param_name = get_new_name(ids, param_name);
                 let param = TypedName {
-                    name: param_name.clone(),
+                    name: new_param_name.clone(),
                     typ: param_typ.clone().readback_typ(ids),
                 };
-                ret_typ_env.insert(param_name, Self::from((param_typ, param_name)));
-                ids.push(param_name);
+                ret_typ_env.insert(param_name, Self::from((param_typ, new_param_name.clone())));
+                ids.insert(new_param_name.clone());
                 let ret_typ = ret_typ_exp.eval(&ret_typ_env).readback_typ(ids);
-                ids.pop();
+                ids.remove(&new_param_name);
                 Norm::from(Pi { param, ret_typ })
             }
             Self::Neut(_typ, neut) => Norm::from(neut.readback(ids)),
@@ -50,7 +53,7 @@ impl<'a> Dom<'a> {
     }
 
     /// Helper Readback for a Domain Value as a Neutral Domain Value
-    fn readback_as_neut(self, ids: &mut Idents<'a>, err: fn(&Self) -> !) -> Neut {
+    fn readback_as_neut(self, ids: &mut Idents, err: fn(&Self) -> !) -> Neut {
         DomNeut::try_from(self)
             .unwrap_or_else(|x| err(&x))
             .readback(ids)
@@ -58,10 +61,10 @@ impl<'a> Dom<'a> {
 }
 
 /// # Readback from [DomNorm] into [Norm]
-impl<'a> Readback<'a> for DomNorm<'a> {
+impl<'a> Readback for DomNorm<'a> {
     type NormalizedSyntax = Norm;
 
-    fn readback(self, ids: &mut Idents<'a>) -> Norm {
+    fn readback(self, ids: &mut Idents) -> Norm {
         let Self { typ, dom } = self;
         match typ {
             Dom::Univ(_) => dom.readback_typ(ids),
@@ -73,20 +76,21 @@ impl<'a> Readback<'a> for DomNorm<'a> {
                     mut ret_typ_env,
                     ret_typ_exp,
                 } = *pi_dom;
+                let new_param_name = get_new_name(ids, param_name);
                 let param = TypedName {
-                    name: param_name.clone(),
+                    name: new_param_name.clone(),
                     typ: param_typ.clone().readback_typ(ids),
                 };
-                let param_itself = Dom::from((param_typ, param_name));
+                let param_itself = Dom::from((param_typ, new_param_name.clone()));
                 ret_typ_env.insert(param_name, param_itself.clone());
-                ids.push(param_name);
+                ids.insert(new_param_name.clone());
                 let ret_typ_dom = ret_typ_exp.eval(&ret_typ_env);
                 let body = Self {
                     typ: ret_typ_dom,
                     dom: reduce_app(dom, param_itself),
                 }
                 .readback(ids);
-                ids.pop();
+                ids.remove(&new_param_name);
                 Norm::from(Fun { param, body })
             }
             Dom::Neut(_, _) => Norm::from(dom.readback_as_neut(ids, non_neutral_exp_panic)),
@@ -96,10 +100,10 @@ impl<'a> Readback<'a> for DomNorm<'a> {
 }
 
 /// # Readback from [DomNeut] into [Neut]
-impl<'a> Readback<'a> for DomNeut<'a> {
+impl<'a> Readback for DomNeut<'a> {
     type NormalizedSyntax = Neut;
 
-    fn readback(self, ids: &mut Idents<'a>) -> Neut {
+    fn readback(self, ids: &mut Idents) -> Neut {
         match self {
             Self::Absurd(absurd_dom) => {
                 let AbsurdDom {
@@ -109,13 +113,14 @@ impl<'a> Readback<'a> for DomNeut<'a> {
                     motive_body_exp,
                 } = *absurd_dom;
                 let scr = scr.readback(ids);
-                motive_body_env.insert(motive_param, Dom::from((Dom::Bottom, motive_param)));
-                ids.push(motive_param);
+                let new_motive_param = get_new_name(ids, motive_param);
+                motive_body_env.insert(motive_param, Dom::from((Dom::Bottom, new_motive_param.clone())));
+                ids.insert(new_motive_param.clone());
                 let motive_body = motive_body_exp.eval(&motive_body_env).readback_typ(ids);
-                ids.pop();
+                ids.remove(&new_motive_param);
                 Neut::from(Absurd {
                     scr,
-                    motive_param: motive_param.clone(),
+                    motive_param: new_motive_param,
                     motive_body,
                 })
             }
@@ -126,5 +131,13 @@ impl<'a> Readback<'a> for DomNeut<'a> {
             }
             Self::Var(id) => Neut::from(id.clone()),
         }
+    }
+}
+
+fn get_new_name(ids: &Idents, id: &String) -> String {
+    if ids.contains(id) {
+        format!("{}#{}", id, ids.len())
+    } else {
+        id.clone()
     }
 }

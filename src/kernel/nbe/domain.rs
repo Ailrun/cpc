@@ -7,11 +7,13 @@
 //! βη-normal form by η expanding it in the course.
 use std::collections::HashMap;
 
+use serde::Serialize;
+
 use crate::front::syntax::*;
 
 pub type Env<'a> = HashMap<&'a Ident, Dom<'a>>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub enum Dom<'a> {
     Univ(Level),
     Bottom,
@@ -20,20 +22,20 @@ pub enum Dom<'a> {
     Neut(Box<Self>, DomNeut<'a>),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub enum DomNeut<'a> {
     Absurd(Box<AbsurdDom<'a>>),
     App(Box<AppDom<'a>>),
-    Var(&'a Ident),
+    Var(Ident),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct DomNorm<'a> {
     pub typ: Dom<'a>,
     pub dom: Dom<'a>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct AbsurdDom<'a> {
     pub scr: DomNeut<'a>,
     pub motive_param: &'a Ident,
@@ -41,7 +43,7 @@ pub struct AbsurdDom<'a> {
     pub motive_body_exp: &'a Exp,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct PiDom<'a> {
     pub param: &'a Ident,
     pub param_typ: Dom<'a>,
@@ -49,14 +51,14 @@ pub struct PiDom<'a> {
     pub ret_typ_exp: &'a Exp,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct FunDom<'a> {
     pub param: &'a Ident,
     pub body_env: Env<'a>,
     pub body_exp: &'a Exp,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct AppDom<'a> {
     pub fun: DomNeut<'a>,
     pub arg: DomNorm<'a>,
@@ -102,8 +104,8 @@ impl<'a> From<AppDom<'a>> for DomNeut<'a> {
     }
 }
 
-impl<'a> From<&'a Ident> for DomNeut<'a> {
-    fn from(value: &'a Ident) -> Self {
+impl<'a> From<Ident> for DomNeut<'a> {
+    fn from(value: Ident) -> Self {
         Self::Var(value)
     }
 }

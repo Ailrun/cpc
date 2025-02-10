@@ -58,13 +58,13 @@ fn build_initial_env<'a>(ctx: &'a Ctx) -> Env<'a> {
     let mut env = HashMap::new();
     for (var, var_typ) in ctx {
         let var_typ_dom: Dom<'a> = var_typ.eval(&env);
-        env.insert(*var, Dom::from((var_typ_dom, *var)));
+        env.insert(*var, Dom::from((var_typ_dom, (*var).clone())));
     }
     env
 }
 
-fn env_into_idents<'a>(env: &Env<'a>) -> Idents<'a> {
-    env.keys().copied().collect()
+fn env_into_idents<'a>(env: &Env<'a>) -> Idents {
+    env.keys().copied().cloned().collect()
 }
 
 #[cfg(test)]
@@ -187,14 +187,42 @@ mod tests {
             omit_expression => true,
         }, {
             insta::assert_ron_snapshot!(exp.nbe(&typ, &HashMap::new()), @r#"
-      Fun(Fun(
-        param: TypedName(
-          name: "d",
-          typ: Univ(1),
-        ),
-        body: Neut(Var("d")),
-      ))
-      "#);
+            Fun(Fun(
+              param: TypedName(
+                name: "d",
+                typ: Univ(1),
+              ),
+              body: Neut(Var("d")),
+            ))
+            "#);
+        });
+    }
+
+    #[test]
+    fn capture_free_nbe1() {
+        let exp_str = "(fun (a : Univ@1) -> (fun (b: Univ@1) -> (fun (a : Univ@2) -> b)) a)";
+        let typ_str = "Pi (d : Univ@1) . (Pi (d : Univ@2) . Univ@1)";
+        let exp = parser::proper_expression("test", exp_str).unwrap();
+        let typ = parser::proper_expression("test", typ_str).unwrap();
+        insta::with_settings!({
+            description => format!("{} : {}", exp_str, typ_str),
+            omit_expression => true,
+        }, {
+            insta::assert_ron_snapshot!(exp.nbe(&typ, &HashMap::new()), @r#"
+            Fun(Fun(
+              param: TypedName(
+                name: "d",
+                typ: Univ(1),
+              ),
+              body: Fun(Fun(
+                param: TypedName(
+                  name: "d#1",
+                  typ: Univ(2),
+                ),
+                body: Neut(Var("d")),
+              )),
+            ))
+            "#);
         });
     }
 }
