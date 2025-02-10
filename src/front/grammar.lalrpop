@@ -12,7 +12,7 @@ pub ReplInstr: ReplInstr = {
 
 pub Exp: Exp = {
     PiBinderKeyword <PiBindings>,
-    FunBinderKeyword <param:Parameter> "->" <body:Exp> => Exp::from(Fun {<>}),
+    FunBinderKeyword <FunBindings>,
     "Absurd" <scr:Exp> "Return" "(" <motive_param:"identifier"> "." <motive_body:Exp> ")" => Exp::from(Absurd {<>}),
     ApplicativeExp,
 };
@@ -20,6 +20,11 @@ pub Exp: Exp = {
 PiBindings: Exp = {
     <param:Parameter> <ret_typ:PiBindings> => Exp::from(Pi {<>}),
     "." <Exp>,
+};
+
+FunBindings: Exp = {
+    <param:Parameter> <body:FunBindings> => Exp::from(Fun {<>}),
+    "->" <Exp>,
 };
 
 ApplicativeExp: Exp = {
