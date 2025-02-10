@@ -128,32 +128,47 @@
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Readback from Domain
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a></pre></div><pre class="rust"><code><span class="doccomment">//! # Readback from Domain
 //!
 //! This module describes readback from domain into syntactic forms,
 //! specifically from [DomNorm] and [DomNeut] into [Norm] and [Neut] respectively.
-</span><span class="kw">use super</span>::{domain::<span class="kw-2">*</span>, evaluation::<span class="kw-2">*</span>, panic::<span class="kw-2">*</span>};
+</span><span class="kw">use </span>std::collections::HashSet;
+
+<span class="kw">use super</span>::{domain::<span class="kw-2">*</span>, evaluation::<span class="kw-2">*</span>, panic::<span class="kw-2">*</span>};
 <span class="kw">use </span><span class="kw">crate</span>::front::syntax::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// # List of Seen Identifiers
 ///
 /// This will be needed in a future when we create new names
 /// to avoid identifier conflicts.
-</span><span class="kw">pub type </span>Idents&lt;<span class="lifetime">'a</span>&gt; = Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Ident&gt;;
+</span><span class="kw">pub type </span>Idents = HashSet&lt;Ident&gt;;
 
 <span class="doccomment">/// # Main Trait for Readback
-</span><span class="kw">pub trait </span>Readback&lt;<span class="lifetime">'a</span>&gt; {
+</span><span class="kw">pub trait </span>Readback {
     <span class="kw">type </span>NormalizedSyntax;
 
     <span class="doccomment">/// This method takes the ownership of `self`
     /// as we also want to take the ownership of [Dom] as a domain type
     /// in domain values.
-    </span><span class="kw">fn </span>readback(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents&lt;<span class="lifetime">'a</span>&gt;) -&gt; <span class="self">Self</span>::NormalizedSyntax;
+    </span><span class="kw">fn </span>readback(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents) -&gt; <span class="self">Self</span>::NormalizedSyntax;
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Dom&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Special Readback from a domain type into a normalized syntactic type.
-    </span><span class="kw">pub fn </span>readback_typ(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents&lt;<span class="lifetime">'a</span>&gt;) -&gt; Norm {
+    </span><span class="kw">pub fn </span>readback_typ(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents) -&gt; Norm {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Univ(lvl) =&gt; Norm::from(lvl),
             <span class="self">Self</span>::Bottom =&gt; Norm::Bottom,
@@ -164,14 +179,15 @@
                     <span class="kw-2">mut </span>ret_typ_env,
                     ret_typ_exp,
                 } = <span class="kw-2">*</span>pi_dom;
+                <span class="kw">let </span>new_param_name = get_new_name(ids, param_name);
                 <span class="kw">let </span>param = TypedName {
-                    name: param_name.clone(),
+                    name: new_param_name.clone(),
                     typ: param_typ.clone().readback_typ(ids),
                 };
-                ret_typ_env.insert(param_name, <span class="self">Self</span>::from((param_typ, param_name)));
-                ids.push(param_name);
+                ret_typ_env.insert(param_name, <span class="self">Self</span>::from((param_typ, new_param_name.clone())));
+                ids.insert(new_param_name.clone());
                 <span class="kw">let </span>ret_typ = ret_typ_exp.eval(<span class="kw-2">&amp;</span>ret_typ_env).readback_typ(ids);
-                ids.pop();
+                ids.remove(<span class="kw-2">&amp;</span>new_param_name);
                 Norm::from(Pi { param, ret_typ })
             }
             <span class="self">Self</span>::Neut(_typ, neut) =&gt; Norm::from(neut.readback(ids)),
@@ -180,7 +196,7 @@
     }
 
     <span class="doccomment">/// Helper Readback for a Domain Value as a Neutral Domain Value
-    </span><span class="kw">fn </span>readback_as_neut(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents&lt;<span class="lifetime">'a</span>&gt;, err: <span class="kw">fn</span>(<span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; !) -&gt; Neut {
+    </span><span class="kw">fn </span>readback_as_neut(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents, err: <span class="kw">fn</span>(<span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; !) -&gt; Neut {
         DomNeut::try_from(<span class="self">self</span>)
             .unwrap_or_else(|x| err(<span class="kw-2">&amp;</span>x))
             .readback(ids)
@@ -188,10 +204,10 @@
 }
 
 <span class="doccomment">/// # Readback from [DomNorm] into [Norm]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Readback&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>DomNorm&lt;<span class="lifetime">'a</span>&gt; {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Readback <span class="kw">for </span>DomNorm&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">type </span>NormalizedSyntax = Norm;
 
-    <span class="kw">fn </span>readback(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents&lt;<span class="lifetime">'a</span>&gt;) -&gt; Norm {
+    <span class="kw">fn </span>readback(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents) -&gt; Norm {
         <span class="kw">let </span><span class="self">Self </span>{ typ, dom } = <span class="self">self</span>;
         <span class="kw">match </span>typ {
             Dom::Univ(<span class="kw">_</span>) =&gt; dom.readback_typ(ids),
@@ -203,20 +219,21 @@
                     <span class="kw-2">mut </span>ret_typ_env,
                     ret_typ_exp,
                 } = <span class="kw-2">*</span>pi_dom;
+                <span class="kw">let </span>new_param_name = get_new_name(ids, param_name);
                 <span class="kw">let </span>param = TypedName {
-                    name: param_name.clone(),
+                    name: new_param_name.clone(),
                     typ: param_typ.clone().readback_typ(ids),
                 };
-                <span class="kw">let </span>param_itself = Dom::from((param_typ, param_name));
+                <span class="kw">let </span>param_itself = Dom::from((param_typ, new_param_name.clone()));
                 ret_typ_env.insert(param_name, param_itself.clone());
-                ids.push(param_name);
+                ids.insert(new_param_name.clone());
                 <span class="kw">let </span>ret_typ_dom = ret_typ_exp.eval(<span class="kw-2">&amp;</span>ret_typ_env);
                 <span class="kw">let </span>body = <span class="self">Self </span>{
                     typ: ret_typ_dom,
                     dom: reduce_app(dom, param_itself),
                 }
                 .readback(ids);
-                ids.pop();
+                ids.remove(<span class="kw-2">&amp;</span>new_param_name);
                 Norm::from(Fun { param, body })
             }
             Dom::Neut(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; Norm::from(dom.readback_as_neut(ids, non_neutral_exp_panic)),
@@ -226,10 +243,10 @@
 }
 
 <span class="doccomment">/// # Readback from [DomNeut] into [Neut]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Readback&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>DomNeut&lt;<span class="lifetime">'a</span>&gt; {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Readback <span class="kw">for </span>DomNeut&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">type </span>NormalizedSyntax = Neut;
 
-    <span class="kw">fn </span>readback(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents&lt;<span class="lifetime">'a</span>&gt;) -&gt; Neut {
+    <span class="kw">fn </span>readback(<span class="self">self</span>, ids: <span class="kw-2">&amp;mut </span>Idents) -&gt; Neut {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Absurd(absurd_dom) =&gt; {
                 <span class="kw">let </span>AbsurdDom {
@@ -239,13 +256,14 @@
                     motive_body_exp,
                 } = <span class="kw-2">*</span>absurd_dom;
                 <span class="kw">let </span>scr = scr.readback(ids);
-                motive_body_env.insert(motive_param, Dom::from((Dom::Bottom, motive_param)));
-                ids.push(motive_param);
+                <span class="kw">let </span>new_motive_param = get_new_name(ids, motive_param);
+                motive_body_env.insert(motive_param, Dom::from((Dom::Bottom, new_motive_param.clone())));
+                ids.insert(new_motive_param.clone());
                 <span class="kw">let </span>motive_body = motive_body_exp.eval(<span class="kw-2">&amp;</span>motive_body_env).readback_typ(ids);
-                ids.pop();
+                ids.remove(<span class="kw-2">&amp;</span>new_motive_param);
                 Neut::from(Absurd {
                     scr,
-                    motive_param: motive_param.clone(),
+                    motive_param: new_motive_param,
                     motive_body,
                 })
             }
@@ -256,6 +274,14 @@
             }
             <span class="self">Self</span>::Var(id) =&gt; Neut::from(id.clone()),
         }
+    }
+}
+
+<span class="kw">fn </span>get_new_name(ids: <span class="kw-2">&amp;</span>Idents, id: <span class="kw-2">&amp;</span>String) -&gt; String {
+    <span class="kw">if </span>ids.contains(id) {
+        <span class="macro">format!</span>(<span class="string">"{}#{}"</span>, id, ids.len())
+    } <span class="kw">else </span>{
+        id.clone()
     }
 }
 </code></pre></div></section></main></body></html>

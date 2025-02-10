@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["Readback"],"type":["Idents"]};
+window.SIDEBAR_ITEMS = {"fn":["get_new_name"],"trait":["Readback"],"type":["Idents"]};
